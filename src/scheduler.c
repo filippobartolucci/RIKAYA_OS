@@ -18,7 +18,7 @@ void priorityAging() {
 
 }
 
-void contextSwitch() {
+void deadlockDetected() {
 	if (!ready_queue) {
 		/* se process count = 0 invoco HALT ROM */
 		if (process_count == 0) 
@@ -26,7 +26,7 @@ void contextSwitch() {
     		/* se process count > 0 e soft block count = 0 deadlock */
 		else if (process_count > 0 && soft_block_count == 0)
 			PANIC();
-    		/* se process count e soft block count > 0 invoco un ionstruzione WAIT*/
+    		/* se process count e soft block count > 0 invoco un istruzione WAIT*/
 		else if (process_count > 0 && soft_block_count > 0)
 			WAIT();
 	}
@@ -34,3 +34,4 @@ void contextSwitch() {
 	
 		
 }
+
