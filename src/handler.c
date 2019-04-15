@@ -12,6 +12,10 @@ void sysbk_handler(void){
     /* Registro nel quale è salvata la SYSCALL chiamata */
     u32 syscall_number = old_state->reg_a0
     
+    /* Gestione dei BREAKPOINT da implementare nella PHASE2 
+     * Ignorati per PHASE1.5                                
+    */
+        
     switch (syscall_number){
         /* Eseguo la SYSCALL richiesta */
         case TERMINATEPROCESS:
@@ -28,7 +32,13 @@ void sysbk_handler(void){
 
 /* Gestione INTERRUPT */
 void int_handler(void){
+    /* Stato dell'esecuzione prima dell'eccezione */
+    state_t *old_state = interrupt_oldarea;
+    u32 cause = old_state->s_cause;
     
+    /* Gestione degli INTERRUPT dei device da implementare nella PHASE2 */
+    
+    scheduler();
 }
 
 /* Gestione TLB */
@@ -56,4 +66,6 @@ HIDDEN void terminateProcess(pcb_t *p){
         freePcb(removeChild(p->p_child));
     outChild(p);
     freePcb(p);
+    process_count--;
+    scheduler();
 }
