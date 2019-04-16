@@ -12,7 +12,7 @@
 /* Lista dei processi ready */
 INIT_LIST(ready_queue);
 /* Puntatore al processo attivo */
-pcb_t current_process = NULL;
+pcb_t* current_process = NULL;
 /* Contatore processi */
 u32 process_count = 0;
 /* Contatore processi bloccati per I/O */
@@ -30,15 +30,48 @@ HIDDEN state_t *program_trap_oldarea = PRGTRP_OLDAREA;
 HIDDEN state_t *interrupt_oldarea = INT_OLDAREA;
 HIDDEN state_t *tblmgt_oldarea = TBL_OLDAREA;
 
+/* Funzione per inizializzare current_process settando:
+     * Interrupt ON;
+     * Virtual Memory OFF;
+     * Processor Local Timer ON;
+     * $SP a RAMSIZE-FRAMESIZE*n;
+     * Priorità uguale ad n
+     * pc_epc = (memaddr) testn;
+*/
+
+void setProcess(pcb_t* process, int n){
+	process->p_s.status |= (STATUS_IEc);
+	process->p_s.status |= ~(STATUS_KUc);
+	process->p_s.status |= ~(STATUS_VMc);
+	process->p_s.status |= (STATUS_TE);
+	process->priority = n;
+	process->p_s.reg_sp = (RAMTOP) - FRAME_SIZE * n;
+	process->p_s.reg_t9 = (RAMTOP) - FRAME_SIZE * n;
+	process->p_s.pc_epc = (memaddr)test;
+}
 
 int main(void){
     
     initAREA();
     initPcbs();
     
+    /* Instanzio il processo corrente */
     current_process = allocPCB();
     process_count++;
-    
+
+    /* Setto i dovuti campi del processo corrente */
+	
+    int n = 1;    
+    /*Questo andrebbe fatto per tutti e tre i test, scorrendo la lista dei processi
+     * ma non so se basta passare current_process->p_sib a setProcess
+     * dato che sarebbe un tipo list_head... dovremmo passare il pcb
+     */
+    setProcess(current_process, n);
+    list_add_tail(&(current_process->p_next), ready_queue);
+
+
+    /* Passo il controllo allo scheduler */
+    scheduler();
 
     return 0;
 }
