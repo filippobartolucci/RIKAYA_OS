@@ -12,3 +12,4 @@ HIDDEN inline void initPGMTRP(u32 status);
 HIDDEN inline void initINT(u32 status);
 HIDDEN inline void initTLB(u32 status);
 void initNEWAREA(void);
+extern void test();
