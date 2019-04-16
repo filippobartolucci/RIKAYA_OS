@@ -7,7 +7,6 @@
 #include "types_rikaya.h"
 #include "initArea.h"
 #include "p1.5test_rikaya_v0.c"
-#include "umps/cp0.h"
 
 /* Funzioni per l'inizializzazione delle NEW AREA */
 HIDDEN inline void initSYSBK(u32 status){
@@ -39,6 +38,8 @@ HIDDEN inline void initTLB(u32 status){
     tblmgt_newarea->reg_t9 = tlb_handler;
 }
 
+
+
 /* Funzione che si occupa dell'inizializzazione delle NEWAREA della ROM.
  * Viene essere settato il campo status in maniera tale da:
  *  - Mascherare gli interrupt
@@ -47,15 +48,17 @@ HIDDEN inline void initTLB(u32 status){
  *  - Essere in kernel mode
 */
 void initAREA(void){  
-    
-    /* Nello status:
-     * Maschero interrupt
-     * Setto Virtual Memory OFF
-     * attivo il Processor Local Timer
-     * abilito il kernel-mode
-     */
     u32 s = 0;
-    s |= (STATUS_IEc); 
+
+     /* Nello status:
+      *  Maschero interrupt
+      *  Setto Virtual Memory OFF
+      *  attivo il Processor Local Timer
+      *  abilito il kernel-mode
+      */
+     
+    s |= ~(STATUS_IEc);
+    s |= ~(STATUS_KUc);
     s |= ~(STATUS_VMc); 
     s |= (STATUS_TE);
     
@@ -70,6 +73,5 @@ void initAREA(void){
     initPGMTRAP(s);
     initINT(s);
     initTLB(s);
-    
-    
 }
+
