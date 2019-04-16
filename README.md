@@ -14,9 +14,9 @@ Componenti da implementare in questa fase:
 ## Compilare per μMPS2
 È necessario avere prima installato [μMPS2](https://github.com/tjonjic/umps).
 
-Per compilare basterà lanciare il comando make dentro la cartella p1test_rikaya
+Per compilare basterà lanciare il comando make dentro la cartella p1.5test_rikaya
 ```
-$ cd p1test_rikaya 
+$ cd p1.5test_rikaya 
 $ make 
 ``` 
 Verrano creati due file, kernel.core.umps e kernel.stab.umps, che sono i file da usare per la configurazione della macchina MIPS in μMPS2
