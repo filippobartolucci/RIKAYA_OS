@@ -48,27 +48,26 @@ HIDDEN inline void initTLB(u32 status){
  *  - Essere in kernel mode
 */
 void initAREA(void){  
-    u32 s = 0;
-
+    
      /* Nello status:
       *  Maschero interrupt
       *  Setto Virtual Memory OFF
       *  attivo il Processor Local Timer
       *  abilito il kernel-mode
       */
-     
+    u32 s = 0;
     s |= ~(STATUS_IEc);
     s |= ~(STATUS_KUc);
     s |= ~(STATUS_VMc); 
     s |= (STATUS_TE);
     
+    /* Metto a 0 tutte le newarea della roma */
     memset(sysbk_newarea, 0, sizeof(state_t));
     memset(program_trap_newarea, 0, sizeof(state_t));
     memset(interrupt_newarea, 0, sizeof(state_t));
     memset(tblmgt_newarea, 0, sizeof(state_t));
 
-    
-    // intanto metto zero, ma andrà cambiato
+    /* Inizializzazione delle 4 aree */
     initSYS(s);
     initPGMTRAP(s);
     initINT(s);
