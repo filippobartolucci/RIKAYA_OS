@@ -7,7 +7,7 @@
 #include "types_rikaya.h"
 #include "initArea.h"
 #include "utils.h"
-#include "p1.5test_rikaya_v0.c"
+
 
 /* Lista dei processi ready */
 INIT_LIST(ready_queue);
@@ -30,7 +30,8 @@ HIDDEN state_t *program_trap_oldarea = PRGTRP_OLDAREA;
 HIDDEN state_t *interrupt_oldarea = INT_OLDAREA;
 HIDDEN state_t *tblmgt_oldarea = TBL_OLDAREA;
 
-/* Funzione per inizializzare current_process settando:
+
+/* Funzione per inizializzare un pcb_t settando:
      * Interrupt ON;
      * Virtual Memory OFF;
      * Processor Local Timer ON;
@@ -38,7 +39,6 @@ HIDDEN state_t *tblmgt_oldarea = TBL_OLDAREA;
      * Priorità uguale ad n
      * pc_epc = (memaddr) testn;
 */
-
 void setProcess(pcb_t* process, int n){
 	process->p_s.status |= (STATUS_IEc);
 	process->p_s.status |= ~(STATUS_KUc);
@@ -60,7 +60,6 @@ int main(void){
     process_count++;
 
     /* Setto i dovuti campi del processo corrente */
-	
     int n = 1;    
     /*Questo andrebbe fatto per tutti e tre i test, scorrendo la lista dei processi
      * ma non so se basta passare current_process->p_sib a setProcess
