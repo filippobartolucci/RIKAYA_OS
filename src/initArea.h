@@ -16,6 +16,13 @@ extern u32 process_count;
 /* Contatore processi bloccati per I/O */
 extern u32 soft_block_count;
 
+/* Puntatori alle NEW AREA della ROM */
+extern state_t *sysbk_newarea = SYSBK_NEWAREA;
+extern state_t *program_trap_newarea = PRGTRP_NEWAREA;
+extern state_t *interrupt_newarea = INT_NEWAREA;
+extern state_t *tblmgt_newarea = TLB_NEWAREA;
+
+
 HIDDEN inline void initSYS(u32 status);
 HIDDEN inline void initPGMTRP(u32 status);
 HIDDEN inline void initINT(u32 status);
