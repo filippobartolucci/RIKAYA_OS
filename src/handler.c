@@ -70,11 +70,15 @@ void int_handler(void){
 		line = 6;
     else line =7;                           
     
-    /* Ho sbagliato e ho messo i numeri, ma nel const.h ci sono le varie define per gli interrupt */
-    
-    switch(line):
-    /* Switch sui vari tipi di interrupt da implementare */
-    
+	
+    switch(line){
+    case INT_TIMER
+	    break;
+    deault:
+            break;
+    }
+	
+  
     /* Gestione degli INTERRUPT dei device da implementare nella PHASE2 */
     scheduler();
 }
