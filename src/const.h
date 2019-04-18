@@ -63,6 +63,6 @@
 #define TERMINATEPROCESS 3
 
 /*Define Time-Slice*/
-#define TIMESLICE 3
+#define TIMESLICE 3000
 
 #endif
