@@ -56,23 +56,31 @@ void int_handler(void){
     /* Ricerca dell' interrupt */
     if (cause == (cause | 0x1))          /* 00000001 */	  
 		line = 0;
+		/* Boh */
     else if (cause == (cause | 0x2))     /* 00000010 */  
 		line = 1;
+		/* Processor Local Timer */
     else if (cause == (cause | 0x4))     /* 00000100 */	
 		 line = 2;
+		/* Interval Timer */
     else if (cause == (cause | 0x8))     /* 00001000 */
 		line = 3;
+		/* Disk */
     else if (cause == (cause | 0x10))	 /* 00010000 */	
 		line = 4;
+		/* Tape */
     else if (cause == (cause | 0x20))    /* 00100000 */
 		line = 5;
+		/* Boh */
     else if (cause == (cause | 0x40))    /* 01000000 */
 		line = 6;
-    else line =7;                           
+		/* Printer */
+    else line =7; 
+	/* Terminal */                          
     
 	
     switch(line){
-    case INT_TIMER:
+    case INT_PLT:
 	    break;
     deault:
             break;
