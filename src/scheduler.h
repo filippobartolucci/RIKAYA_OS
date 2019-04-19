@@ -1,9 +1,12 @@
-#include "types_rikaya.h"
-#include "const.h"
-#include "pcb.h"
+#ifndef _SCHEDULER_H
+#define _SCHEDULER_H
 
-/*funzione che in caso di deadlock lo gestisce altrimenti Round Robin tra i processi */
+#include "pcb.h"
+#include "initArea.h"
+
 void scheduler();
 
-HIDDEN inline void priorityAging(void);
-HIDDEN inline void restorePriority(pcb_t *pcb);
+inline void priorityAging(void);
+inline void restorePriority(pcb_t *pcb);
+
+#endif 
