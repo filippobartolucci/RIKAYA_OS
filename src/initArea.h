@@ -5,7 +5,7 @@
 #include "listx.h"
 #include "scheduler.h"
 #include "types_rikaya.h"
-#include "p1.5test_rikaya_v0.c"
+
 
 /* Lista dei processi ready */
 extern INIT_LIST(ready_queue);
