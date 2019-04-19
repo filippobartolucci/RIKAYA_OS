@@ -13,6 +13,8 @@
 #define RAMSIZE *((unsigned int *)0x10000004)
 #define RAMTOP (RAMBASE + RAMSIZE)
 
+typedef unsigned int u32;
+
 /* Maxi number of overall (eg, system, daemons, user) concurrent processes */
 #define MAXPROC 20
 
