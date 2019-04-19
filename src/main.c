@@ -23,16 +23,16 @@ u32 process_count = 0;
 u32 soft_block_count = 0;
 
 /* Puntatori alle NEW AREA della ROM */
-HIDDEN state_t *sysbk_newarea = SYSBK_NEWAREA;
-HIDDEN state_t *program_trap_newarea = PRGTRP_NEWAREA;
-HIDDEN state_t *interrupt_newarea = INT_NEWAREA;
-HIDDEN state_t *tblmgt_newarea = TLB_NEWAREA;
+state_t *sysbk_newarea = (state_t *)SYSBK_NEWAREA;
+state_t *program_trap_newarea = (state_t *)PGMTRAP_NEWAREA;
+state_t *interrupt_newarea = (state_t *)INT_NEWAREA;
+state_t *tblmgt_newarea = (state_t *)TLB_NEWAREA;
 
 /* Puntatori alle OLD AREA della ROM */
-HIDDEN state_t *sysbk_oldarea = SYSBK_OLDAREA;
-HIDDEN state_t *program_trap_oldarea = PRGTRP_OLDAREA;
-HIDDEN state_t *interrupt_oldarea = INT_OLDAREA;
-HIDDEN state_t *tblmgt_oldarea = TBL_OLDAREA;
+state_t *sysbk_oldarea = (state_t *)SYSBK_OLDAREA;
+state_t *program_trap_oldarea = (state_t *)PGMTRAP_OLDAREA;
+state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
+state_t *tblmgt_oldarea = (state_t *)TLB_OLDAREA;
 
 
 /* Funzione per inizializzare un pcb_t settando:
@@ -44,33 +44,29 @@ HIDDEN state_t *tblmgt_oldarea = TBL_OLDAREA;
      * pc_epc = (memaddr) testn;
 */
 void setProcess(pcb_t* process, int n){
-	process->p_s.status |= (STATUS_IEc);
-	process->p_s.status |= ~(STATUS_KUc);
-	process->p_s.status |= ~(STATUS_VMc);
-	process->p_s.status |= (STATUS_TE);
 	process->priority = n;
 	process->p_s.reg_sp = (RAMTOP) - FRAME_SIZE * n;
 	process->p_s.reg_t9 = (RAMTOP) - FRAME_SIZE * n;
-	process->p_s.pc_epc = (memaddr)test;
+	process->p_s.pc_epc = (memaddr)test1;
 }
 
 int main(void){
-    
+
     initAREA();
     initPcbs();
-    
+
     /* Instanzio il processo corrente */
-    current_process = allocPCB();
+    current_process = allocPcb();
     process_count++;
 
     /* Setto i dovuti campi del processo corrente */
-    int n = 1;    
+    int n = 1;
     /*Questo andrebbe fatto per tutti e tre i test, scorrendo la lista dei processi
      * ma non so se basta passare current_process->p_sib a setProcess
      * dato che sarebbe un tipo list_head... dovremmo passare il pcb
      */
     setProcess(current_process, n);
-    list_add_tail(&(current_process->p_next), ready_queue);
+    list_add_tail(&(current_process->p_next),  &ready_queue);
 
 
     /* Passo il controllo allo scheduler */
