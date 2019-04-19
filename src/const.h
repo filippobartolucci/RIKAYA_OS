@@ -7,6 +7,12 @@
  * 
  ****************************************************************************/
 
+#define TOD_LO *((unsigned int *)0x1000001C)
+#define TIME_SCALE *((unsigned int *)0x10000024)
+#define RAMBASE *((unsigned int *)0x10000000)
+#define RAMSIZE *((unsigned int *)0x10000004)
+#define RAMTOP (RAMBASE + RAMSIZE)
+
 /* Maxi number of overall (eg, system, daemons, user) concurrent processes */
 #define MAXPROC 20
 
