@@ -1,12 +1,16 @@
 #include "pcb.h"
 #include "const.h"
 #include "handler.h"
-#include "interrupt.h"
 #include "listx.h"
 #include "scheduler.h"
 #include "types_rikaya.h"
 #include "initArea.h"
 #include "utils.h"
+
+extern void test1();
+extern void test2();
+extern void test3();
+
 
 
 /* Lista dei processi ready */
