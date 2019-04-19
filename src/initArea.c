@@ -1,12 +1,10 @@
 #include "pcb.h"
 #include "const.h"
 #include "handler.h"
-#include "interrupt.h"
 #include "listx.h"
 #include "scheduler.h"
 #include "types_rikaya.h"
 #include "initArea.h"
-#include "p1.5test_rikaya_v0.c"
 
 /* Funzioni per l'inizializzazione delle NEW AREA */
 HIDDEN inline void initSYSBK(u32 status){
@@ -27,6 +25,7 @@ HIDDEN inline void initPGMTRP(u32 status){
 HIDDEN inline void initINT(u32 status){  
     interrupt_newarea->status = status;
     interrupt_newarea->reg_sp = RAMTOP;
+    /* Indirizzo della funzione che gestisce gli INTERRUPT */
     interrupt_newarea->pc_epc = int_handler;
     interrupt_newarea->reg_t9 = int_handler;
 }
@@ -68,8 +67,8 @@ void initAREA(void){
     memset(tblmgt_newarea, 0, sizeof(state_t));
 
     /* Inizializzazione delle 4 aree */
-    initSYS(s);
-    initPGMTRAP(s);
+    initSYSBK(s);
+    initPGMTRP(s);
     initINT(s);
     initTLB(s);
 }
