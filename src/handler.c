@@ -38,7 +38,7 @@ void int_handler(void){
     /* Stato dell'esecuzione prima dell'eccezione */
     state_t *old_state = interrupt_oldarea;
     /* Causa dell'interrupt */
-    u32 cause = old_state->s_cause;
+    u32 cause = old_state->cause;
     
     /* Cerco il device che ha sollevato l'interrupt */
     
