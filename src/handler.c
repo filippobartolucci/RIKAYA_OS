@@ -11,7 +11,7 @@ void sysbk_handler(void){
     state_t *old_state = sysbk_oldarea;
     
     /* Registro nel quale è salvata la SYSCALL chiamata */
-    u32 syscall_number = old_state->reg_a0
+    u32 syscall_number = old_state->reg_a0;
         
     /* Parametri della SYSCALL */
     u32 *arg1 =  old_state->reg_a1;
