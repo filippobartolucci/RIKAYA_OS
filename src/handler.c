@@ -28,7 +28,7 @@ void sysbk_handler(void){
             /* Errore numero SYSCALL inesistente */
             PANIC();
     }
-    scheduler():
+    scheduler();
     
     /* Gestione dei BREAKPOINT da implementare nella PHASE2 */
 }
