@@ -51,8 +51,8 @@
 #define SYSBK_OLDAREA 0x20000348
 
 /* Interrupt lines used by the devices */
-#define INT_TIMER 2    
-#define INT_LOWEST 3  
+#define INT_PLT 1    
+#define INT_IT  2 
 #define INT_DISK 3
 #define INT_TAPE 4
 #define INT_UNUSED 5  
