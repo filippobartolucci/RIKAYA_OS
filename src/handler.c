@@ -72,7 +72,7 @@ void int_handler(void){
     
 	
     switch(line){
-    case INT_TIMER
+    case INT_TIMER:
 	    break;
     deault:
             break;
