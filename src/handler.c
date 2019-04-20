@@ -107,8 +107,8 @@ void pgmtrp_handler(void){
  * Ready Queue.
 */
 HIDDEN void terminateProcess(pcb_t *p){  
-    while(!list_empty(p->p_child))
-        freePcb(removeChild(p->p_child));
+    while(!list_empty(&p->p_child))
+        freePcb(removeChild(&p->p_child));
     outChild(p);
     freePcb(p);
     process_count--;
