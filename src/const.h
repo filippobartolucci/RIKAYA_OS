@@ -17,6 +17,7 @@ typedef unsigned int u32;
 
 /* Maxi number of overall (eg, system, daemons, user) concurrent processes */
 #define MAXPROC 20
+#define MAXPRIO 20
 
 #define UPROCMAX 3  /* number of usermode processes (not including master proc
 		       and system daemons */
