@@ -57,6 +57,16 @@ void scheduler(void)
 
 /* Funzione che si occupa del meccanismo di aging delle priorità dei PCB nella ready queue */
 HIDDEN inline void priorityAging(void) {
+	struct list_head *iter;
+	list_for_each(iter, &ready_queue){
+		pcb_t *tmp = container_o(iter, pcb_t, p_next){
+			pcb_t *tmp=container_of(iter, pcb_t, p_next);
+			if (tmp->priority<20) tmp->priority++;
+		}
+	}
+		
+	
+	
 	//if (!list_empty(ready_queue)) {
     		/* PCB temporaneo che uso per scorrere la ready_queue */
 	//	pcb_t *tmp = readyQueue;
@@ -68,6 +78,7 @@ HIDDEN inline void priorityAging(void) {
 	//		tmp = tmp->p_next;
 	//	}
 	//}
+	/*
 	pcb_t* tmp;
 	tmp = headProcQ(&ready_queue);
 	int i = 0;
@@ -75,6 +86,7 @@ HIDDEN inline void priorityAging(void) {
 		if(tmp->priority < MAXPRIO)
 			tmp->priority++;
 	}
+	*/
 
 }
 
