@@ -26,7 +26,7 @@ state_t *program_trap_oldarea;
 state_t *interrupt_oldarea;
 state_t *tblmgt_oldarea;
 
-HIDDEN inline void initSYS(u32 status);
+HIDDEN inline void initSYSBK(u32 status);
 HIDDEN inline void initPGMTRP(u32 status);
 HIDDEN inline void initINT(u32 status);
 HIDDEN inline void initTLB(u32 status);
