@@ -44,6 +44,8 @@ typedef unsigned int u32;
 #define STATUS_VMo 0x04000000
 #define STATUS_TE  0x08000000
 
+#define STATUS_P
+
 #define DEV_PER_INT 8 /* Maximum number of devices per interrupt line */
 
 #define NULL ((void *) 0)
