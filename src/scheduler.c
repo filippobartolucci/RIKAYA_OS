@@ -8,48 +8,13 @@ void scheduler(void)
 	if (current_process == NULL){
 		if(process_count == 0)
 			HALT();
-		else{
-			current_process = removeProcQ(&ready_queue);
-			restorePriority(current_process);
-			priorityAging();
-
-
-		termprint("current_process != NULL\n", 0);
-		/* Caricamento del Timer */
-		
-	//	pcb_t *next;
-	//	next = headProcQ(&ready_queue);
+		current_process = removeProcQ(&ready_queue);
+		restorePriority(current_process);
 		priorityAging();
-		termprint("setto il timer\n", 0);
-	//	setTIMER(TIMESLICE);
-		
-	//	log_process_order(current_process->original_priority);
-		/* Carica i processi nell'ordine in cui devono essere eseguiti */
-		termprint("chiamo LDST(current_process)\n", 0);
-	//	LDST(&(current_process->p_s));
+		log_process_order(current_process->original_priority);
+		setTIMER(TIMESLICE);
+		LDST(current_process->p_s);
 	}
-	else 
-	{
-		/* Caso Ready Queue vuota*/
-		if (emptyProcQ(&ready_queue))
-		    {
-			    termprint("ready_queue vuota\n", 0);
-			/* Non ci sono altri processi*/
-			if (process_count == 0) 
-				HALT();
-    			/* Rilevazione di Deadlock*/
-			if (process_count > 0 && soft_block_count == 0)
-				PANIC();
-    			/* Un processo e bloccato */
-			if (process_count > 0 && soft_block_count > 0)
-				WAIT();					//si dovrebbero gestire anche gli interupts (abilitare gli interupts)
-		    }
-		    PANIC();
-	}
-	
-	termprint("log_process_order()\n", 0);
-	/*Verifica che i processi vengano alternati correttamente*/
-	log_process_order(current_process->original_priority);
 		
 }
 
