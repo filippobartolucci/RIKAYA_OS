@@ -27,7 +27,7 @@ HIDDEN inline void priorityAging(void) {
 		pcb_t *tmp = container_of(iter, pcb_t, p_next);
 		if (tmp->priority<20) tmp->priority++;
 		}
-	}
+	
 		
 	
 	
