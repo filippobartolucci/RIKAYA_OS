@@ -59,9 +59,8 @@ void scheduler(void)
 HIDDEN inline void priorityAging(void) {
 	struct list_head *iter;
 	list_for_each(iter, &ready_queue){
-		pcb_t *tmp = container_o(iter, pcb_t, p_next){
-			pcb_t *tmp=container_of(iter, pcb_t, p_next);
-			if (tmp->priority<20) tmp->priority++;
+		pcb_t *tmp = container_of(iter, pcb_t, p_next);
+		if (tmp->priority<20) tmp->priority++;
 		}
 	}
 		
