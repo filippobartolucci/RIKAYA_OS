@@ -44,6 +44,7 @@ state_t *tblmgt_oldarea = (state_t *)TLB_OLDAREA;
      * pc_epc = (memaddr) testn;
 */
 void setProcess(pcb_t* process, int n){
+	process->status = STATUS_P;
 	process->priority = n;
 	process->p_s.reg_sp = (RAMTOP) - FRAME_SIZE * n;
 	process->p_s.reg_t9 = (RAMTOP) - FRAME_SIZE * n;
