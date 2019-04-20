@@ -1,11 +1,9 @@
 #include "listx.h"
 #include "scheduler.h"
 
-
-
 void scheduler(void) 
 {
-
+	termprint("inizio scheduler\n", 0);
 	/*gestione dei deadlock poi dei processi*/
 	if (current_process) 
 	{
@@ -15,12 +13,12 @@ void scheduler(void)
 		
 		
 		/* Carica i processi nell'ordine in cui devono essere eseguiti */
-		LDST(&(CurrentProcess->p_s));
+		LDST(&(current_process->p_s));
 	}
 	else 
 	{
 		/* Caso Ready Queue vuota*/
-		if (emptyProcQ(ready_queue)
+		if (emptyProcQ(&ready_queue))
 		    {
 			/* Non ci sono altri processi*/
 			if (process_count == 0) 
@@ -60,7 +58,7 @@ HIDDEN inline void priorityAging(void) {
 
 /* Funzione che si occupa di ripristinare la priorità originale di un PCB */
 HIDDEN inline void restorePriority(pcb_t *pcb){
-	pcb->priority = pcb->original_priority 	
+	pcb->priority = pcb->original_priority; 	
 }
 //gestire un solo inturupt quello del tempo
 //l'unica cosa che esegue lo scheduler e il passaggio da un processo ad un altro
