@@ -6,7 +6,7 @@
 
 void scheduler();
 
-inline void priorityAging(void);
-inline void restorePriority(pcb_t *pcb);
+HIDDEN inline void priorityAging(void);
+HIDDEN inline void restorePriority(pcb_t *pcb);
 
 #endif 
