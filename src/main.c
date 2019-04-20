@@ -14,7 +14,7 @@ extern void test3();
 
 
 /* Lista dei processi ready */
-INIT_LIST(ready_queue);
+LIST_HEAD(ready_queue);
 /* Puntatore al processo attivo */
 pcb_t* current_process = NULL;
 /* Contatore processi */
@@ -52,7 +52,9 @@ void setProcess(pcb_t* process, int n){
 
 int main(void){
 
+    termprint("initArea()\n", 0);
     initAREA();
+    termprint("initPcbs()\n", 0);
     initPcbs();
 
     /* Instanzio il processo corrente */
@@ -65,10 +67,13 @@ int main(void){
      * ma non so se basta passare current_process->p_sib a setProcess
      * dato che sarebbe un tipo list_head... dovremmo passare il pcb
      */
+    termprint("setProcess(current_process)\n", 0);
     setProcess(current_process, n);
+
+    termprint("list_add_tail()\n", 0);
     list_add_tail(&(current_process->p_next),  &ready_queue);
 
-
+    termprint("scheduler()\n",0);
     /* Passo il controllo allo scheduler */
     scheduler();
 
