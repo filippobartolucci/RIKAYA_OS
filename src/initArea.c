@@ -54,10 +54,7 @@ void initAREA(void){
       *  attivo il Processor Local Timer
       *  abilito il kernel-mode
       */
-    u32 s = 0;
-    s |= ~(STATUS_IEc);
-    s |= ~(STATUS_KUc);
-    s |= ~(STATUS_VMc); 
+    u32 s = 0x0; 
     s |= (STATUS_TE);
     
     /* Metto a 0 tutte le newarea della roma */
