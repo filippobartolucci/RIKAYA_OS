@@ -12,7 +12,7 @@ void scheduler(void) {
 		priorityAging();
 		log_process_order(current_process->original_priority);
 		setTIMER(TIMESLICE);
-		LDST(current_process->p_s);
+		LDST(&current_process->p_s);
 	}	
 }
 
