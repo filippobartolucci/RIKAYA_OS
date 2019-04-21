@@ -44,11 +44,9 @@ state_t *tblmgt_oldarea = (state_t *)TLB_OLDAREA;
      * pc_epc = (memaddr) testn;
 */
 void setProcess(pcb_t* process, int n){
-	process->status = STATUS_P;
+	process->p_s.status = 0 | 1<<27 | (0xFF00-0x8000);
 	process->priority = n;
 	process->p_s.reg_sp = (RAMTOP) - FRAME_SIZE * n;
-	process->p_s.reg_t9 = (RAMTOP) - FRAME_SIZE * n;
-	process->p_s.pc_epc = (memaddr)test1;
 }
 
 int main(void){
@@ -60,19 +58,39 @@ int main(void){
 
     /* Instanzio il processo corrente */
     current_process = allocPcb();
-    process_count++;
+    process_count++;  
+  
+    setProcess(current_process,1);
+    current_process->p_s.pc_epc = (memaddr)test1;
+    current_process->p_s.reg_t9 = (memaddr)test1;
+    insertProcQ(&ready_queue, current_process);
 
-    /* Setto i dovuti campi del processo corrente */
-    int n = 1;
-    /*Questo andrebbe fatto per tutti e tre i test, scorrendo la lista dei processi
-     * ma non so se basta passare current_process->p_sib a setProcess
-     * dato che sarebbe un tipo list_head... dovremmo passare il pcb
-     */
+
+    /* Instanzio il processo corrente */
+    current_process = allocPcb();
+    process_count++;  
+  
+    setProcess(current_process,2);
+    current_process->p_s.pc_epc = (memaddr)test2;
+    current_process->p_s.reg_t9 = (memaddr)test2;
+    insertProcQ(&ready_queue, current_process);
+
+
+
+    /* Instanzio il processo corrente */
+    current_process = allocPcb();
+    process_count++;  
+  
+    setProcess(current_process,3);
+    current_process->p_s.pc_epc = (memaddr)test3;
+    current_process->p_s.reg_t9 = (memaddr)test3;
+    insertProcQ(&ready_queue, current_process);
+
+
+    current_process=NULL;
+
+
     termprint("setProcess(current_process)\n", 0);
-    setProcess(current_process, n);
-
-    termprint("list_add_tail()\n", 0);
-    list_add_tail(&(current_process->p_next),  &ready_queue);
 
     termprint("scheduler()\n",0);
     /* Passo il controllo allo scheduler */
@@ -80,3 +98,4 @@ int main(void){
 
     return 0;
 }
+
