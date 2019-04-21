@@ -8,5 +8,6 @@
 
 
 void *memset(void *s, u32 c, int n);
+void memcopy(void *dest, void *src, size_t n);
 
 #endif
