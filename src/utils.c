@@ -7,7 +7,7 @@ void *memset(void *s, u32 c, int n){
   return s;
 }
 
-void memcopy(void *dest, void *src, size_t n) { 
+void memcpy(void *dest, void *src, u32 n) { 
    // Typecast src and dest addresses to (char *) 
    char *csrc = (char *)src; 
    char *cdest = (char *)dest; 
