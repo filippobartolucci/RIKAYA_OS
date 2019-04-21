@@ -13,16 +13,7 @@ void scheduler(void) {
 		log_process_order(current_process->original_priority);
 		setTIMER(TIMESLICE);
 		LDST(current_process->p_s);
-	}else{
-		pcb_t *new_proc = removeProcQ(&ready_queue);
-		restorePriority(new_proc);
-		priorityAging();
-		insertProcQ(&ready_queue,current_process);
-		log_process_order(new_proc->original_priority);
-		current_process = new_proc;
-		setTIMER(TIMESLICE);
-		LDST(current_process->p_s);	
-	}
+	}	
 }
 
 /* Funzione che si occupa del meccanismo di aging delle priorità dei PCB nella ready queue */
