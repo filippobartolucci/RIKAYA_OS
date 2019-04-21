@@ -51,6 +51,7 @@ void int_handler(void){
     /* Ricerca dell' interrupt */
     if (cause == (cause | 0x1))          /* 00000001 */	  
 		line = 0;
+		scheduler();
 
     else if (cause == (cause | 0x2))     /* 00000010 */  
 		line = 1;
@@ -73,16 +74,7 @@ void int_handler(void){
     else line =7; 
 	/* Terminal */                          
     
-	
-    switch(line){
-    case INT_PLT:
-    	    scheduler();
-	    break;
-    deault:
-            break;
-    }
-	
-  
+    scheduler();
     /* Gestione degli INTERRUPT dei device da implementare nella PHASE2 */  
 }
 
