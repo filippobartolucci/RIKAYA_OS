@@ -1,8 +1,7 @@
 #include "listx.h"
 #include "scheduler.h"
 
-void scheduler(void) 
-{
+void scheduler(void) {
 	termprint("inizio scheduler\n", 0);
 	/*gestione dei deadlock poi dei processi*/
 	if (current_process == NULL){
@@ -23,6 +22,7 @@ void scheduler(void)
 		current_process = new_proc;
 		setTIMER(TIMESLICE);
 		LDST(current_process->p_s);	
+	}
 }
 
 /* Funzione che si occupa del meccanismo di aging delle priorità dei PCB nella ready queue */
