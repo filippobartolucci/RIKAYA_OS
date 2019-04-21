@@ -49,9 +49,10 @@ void int_handler(void){
     u32 line;
     
     /* Ricerca dell' interrupt */
-    if (cause == (cause | 0x1))          /* 00000001 */	  
+    if (cause == (cause | 0x1)){         /* 00000001 */	  
 		line = 0;
 		scheduler();
+    }
 
     else if (cause == (cause | 0x2))     /* 00000010 */  
 		line = 1;
