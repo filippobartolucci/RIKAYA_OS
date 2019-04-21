@@ -9,9 +9,9 @@ void sysbk_handler(void){
     u32 syscall_number = old_state->reg_a0;
         
     /* Parametri della SYSCALL */
-    u32 *arg1 =  old_state->reg_a1;
-    u32 *arg2 =  old_state->reg_a2;
-    u32 *arg3 =  old_state->reg_a3;
+    u32 *arg1 =  &old_state->reg_a1;
+    u32 *arg2 =  &old_state->reg_a2;
+    u32 *arg3 =  &old_state->reg_a3;
     
         
     
@@ -51,7 +51,7 @@ void int_handler(void){
     /* Ricerca dell' interrupt */
     if (cause == (cause | 0x1))          /* 00000001 */	  
 		line = 0;
-		/* Boh */
+
     else if (cause == (cause | 0x2))     /* 00000010 */  
 		line = 1;
 		/* Processor Local Timer */
@@ -66,7 +66,7 @@ void int_handler(void){
 		/* Tape */
     else if (cause == (cause | 0x20))    /* 00100000 */
 		line = 5;
-		/* Boh */
+		
     else if (cause == (cause | 0x40))    /* 01000000 */
 		line = 6;
 		/* Printer */
@@ -76,14 +76,14 @@ void int_handler(void){
 	
     switch(line){
     case INT_PLT:
+    	    scheduler();
 	    break;
     deault:
             break;
     }
 	
   
-    /* Gestione degli INTERRUPT dei device da implementare nella PHASE2 */
-    scheduler();
+    /* Gestione degli INTERRUPT dei device da implementare nella PHASE2 */  
 }
 
 /* Gestione TLB */
