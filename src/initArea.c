@@ -12,7 +12,7 @@ HIDDEN inline void initSYSBK(u32 status){
     sysbk_newarea->reg_sp = RAMTOP;
     /* Indirizzo della funzione che gestisce SYSCALL e BREAKPOINT */
     sysbk_newarea->pc_epc = sysbk_handler;  
-    sysbk_newarea->reg_t9 = sysbk_handler;
+    //sysbk_newarea->reg_t9 = sysbk_handler;
 }
 
 HIDDEN inline void initPGMTRP(u32 status){  
@@ -27,7 +27,7 @@ HIDDEN inline void initINT(u32 status){
     interrupt_newarea->reg_sp = RAMTOP;
     /* Indirizzo della funzione che gestisce gli INTERRUPT */
     interrupt_newarea->pc_epc = int_handler;
-    interrupt_newarea->reg_t9 = int_handler;
+    //interrupt_newarea->reg_t9 = int_handler;
 }
 
 HIDDEN inline void initTLB(u32 status){  
@@ -55,7 +55,7 @@ void initAREA(void){
       *  abilito il kernel-mode
       */
     u32 s = 0x0; 
-    s |= (STATUS_TE);
+    s |= 1 << 3| 1 << 27 | 1 << 28;
     
     /* Metto a 0 tutte le newarea della roma */
     memset(sysbk_newarea, 0, sizeof(state_t));
