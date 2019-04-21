@@ -23,10 +23,10 @@ void scheduler(void) {
  	}     
 		       
 	current_process = headProcQ(&ready_queue);   
-    termprint("timer\n",0);
-	setTIMER(3000);
+    	termprint("timer\n",0);
+	setTIMER(TIMESLICE * TIMESCALE);
 	log_process_order(current_process->original_priority);
-    termprint("ldst",0);
+    	termprint("ldst",0);
 	LDST(&current_process->p_s);
 }
 
