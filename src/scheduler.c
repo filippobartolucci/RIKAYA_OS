@@ -17,14 +17,16 @@ void scheduler(void) {
 	pcb_t *old = outProcQ(&ready_queue, current_process);
 	
 	if (old){
-		memcpy(interrupt_oldarea, &old->p_s, sizeof(state_t);
+		memcpy(interrupt_oldarea, &old->p_s, sizeof(state_t));
 		restorePriority(old);
-		insertProc"(&ready_queue,current);
+		insertProcQ(&ready_queue,current_process);
  	}     
 		       
-	current_process = headProcQ(&ready_queue);       
+	current_process = headProcQ(&ready_queue);   
+    termprint("timer\n",0);
 	setTIMER(3000);
-	log_process_order(current_process->original_priority)
+	log_process_order(current_process->original_priority);
+    termprint("ldst",0);
 	LDST(&current_process);
 }
 
@@ -41,3 +43,4 @@ HIDDEN inline void priorityAging(void) {
 HIDDEN inline void restorePriority(pcb_t *pcb){
 	pcb->priority = pcb->original_priority; 	
 }
+
