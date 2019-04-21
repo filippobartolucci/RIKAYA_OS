@@ -27,7 +27,7 @@ void scheduler(void) {
 	setTIMER(3000);
 	log_process_order(current_process->original_priority);
     termprint("ldst",0);
-	LDST(&current_process);
+	LDST(&current_process->p_s);
 }
 
 /* Funzione che si occupa del meccanismo di aging delle priorità dei PCB nella ready queue */
