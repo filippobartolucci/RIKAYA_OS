@@ -62,6 +62,8 @@ typedef unsigned int u32;
 #define SYSBK_NEWAREA 0x200003d4
 #define SYSBK_OLDAREA 0x20000348
 
+#define TIME_SCALE *((unsigned int *)0x10000024)
+
 /* Interrupt lines used by the devices */
 #define INT_PLT 1    
 #define INT_IT  2 
