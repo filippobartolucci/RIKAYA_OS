@@ -43,14 +43,13 @@ state_t *tblmgt_oldarea = (state_t *)TLB_OLDAREA;
      * Priorità uguale ad n
      * pc_epc = (memaddr) testn;
 */
-
 void setProcess(memaddr proc, int n){
 	pcb_t *tmp = allocPcb();
-	tmp->p_s.epc = proc;
-	tmp->p_s.regt9 = proc;
+	tmp->p_s.pc_epc = proc;
+	tmp->p_s.reg_t9 = proc;
 	tmp->priority = n;
 	tmp->original_priority = n;
-	tmp->p_s.reg_sp = RAMTOP - FRAMESIZE * n
+	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * n;
 	tmp->p_s.status = 0 | 1<<27 | (0xFF00-0x8000);
 	
 	current_process++;
