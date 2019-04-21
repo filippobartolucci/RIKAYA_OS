@@ -50,7 +50,7 @@ void setProcess(memaddr proc, int n){
 	tmp->priority = n;
 	tmp->original_priority = n;
 	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * n;
-	tmp->p_s.status = 0 | 1<<27 | (0xFF00-0x8000);
+	tmp->p_s.status = 1800FF04;    //0 | 1<<27 | (0xFF00-0x8000);
 	
 	current_process++;
 	insertProcQ(&ready_queue, tmp);
