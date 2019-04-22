@@ -55,7 +55,7 @@ void initAREA(void){
       *  abilito il kernel-mode
       */
     u32 s = 0; 
-    s |= 1 << 3| 1 << 27 | 1 << 28;
+    s |= 1 << 28| 1 << 27 | 1 << 2;
     
     /* Metto a 0 tutte le newarea della roma */
     memset(sysbk_newarea, 0, sizeof(state_t));
