@@ -7,11 +7,10 @@
 #include "initArea.h"
 #include "utils.h"
 
+/* Funzioni di test per PHASE1.5 */
 extern void test1();
 extern void test2();
 extern void test3();
-
-
 
 /* Lista dei processi ready */
 LIST_HEAD(ready_queue);
@@ -19,8 +18,6 @@ LIST_HEAD(ready_queue);
 pcb_t* current_process = NULL;
 /* Contatore processi */
 u32 process_count = 0;
-/* Contatore processi bloccati per I/O */
-u32 soft_block_count = 0;
 
 /* Puntatori alle NEW AREA della ROM */
 state_t *sysbk_newarea = (state_t *)SYSBK_NEWAREA;
@@ -34,47 +31,58 @@ state_t *program_trap_oldarea = (state_t *)PGMTRAP_OLDAREA;
 state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
 state_t *tblmgt_oldarea = (state_t *)TLB_OLDAREA;
 
-
-/* Funzione per inizializzare un pcb_t settando:
-     * Interrupt ON;
-     * Virtual Memory OFF;
-     * Processor Local Timer ON;
-     * $SP a RAMSIZE-FRAMESIZE*n;
-     * Priorità uguale ad n
-     * pc_epc = (memaddr) testn;
+/* Funzione che si occupa di caricare i processi nello scheduler 
+ * settando in maniera oppurtuna i vari campi:
+ *    - Interrupt ON;
+ *    - Virtual Memory OFF;
+ *    - Processor Local Timer ON;
+ *    - $SP a RAMSIZE-FRAMESIZE*n;
+ *    - Priorità uguale ad n
+ *    - pc_epc = (memaddr) testn;
 */
 void setProcess(memaddr proc, int n){
+    /* Prendo un PCB dalla lista dei PCB liberi */
 	pcb_t *tmp = allocPcb();
+    /* Imposto il PROGRAM COUNTER del processo */
 	tmp->p_s.pc_epc = proc;
 	tmp->p_s.reg_t9 = proc;
+    /* Imposto la priorità */
 	tmp->priority = n;
 	tmp->original_priority = n;
+    /* Imposto lo STACK POINTER */
 	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * n;
-	tmp->p_s.status = 1 << 2 | 1 << 27 | (0xFF00 -0x8000);
+    /* Imposto lo STATUS del process */
+	tmp->p_s.status = 1 << 2 | 1 << 27 | (0xFF00 - 0x8000) ;
 	
-	current_process++;
+    /* Aumento il contatore dei processi */
+	process_count++;
+    /* Inserisco il PCB nella lista dei processi in stato ready */
 	insertProcQ(&ready_queue, tmp);
 }
 
 int main(void){
-
-    termprint("initArea()\n", 0);
-    initAREA();
-    termprint("initPcbs()\n", 0);
-    initPcbs();
-
-   
-
-    termprint("setProcess 1,2,3 \n", 0);
     
-    setProcess(test1, 1);
-    setProcess(test2, 2);
-    setProcess(test3, 3);
+    termprint("\nPKAYA_OS\n",0);
 
-    termprint("Scheduler()\n",0);
+    /* Inizializzazione del sistema */
+    termprint("- Inizializzazione newArea\n", 0);
+    initAREA();
+    termprint("- Inizializzazione dei PCB()\n", 0);
+    initPcbs(); 
+
+    termprint("- Caricamento processi di test\n", 0);
+    
+    setProcess((memaddr)test1, 1);
+    setProcess((memaddr)test2, 2);
+    setProcess((memaddr)test3, 3);
+
+    termprint("- Avvio dello scheduler\n\n",0);
 	
     /* Passo il controllo allo scheduler */
     scheduler();
+    
+    /* L'esecuzione non può mai arrivare qua */
+    PANIC();
 
     return 0;
 }
