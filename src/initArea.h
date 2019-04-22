@@ -5,6 +5,7 @@
 #include "listx.h"
 #include "types_rikaya.h"
 
+
 /* Lista dei processi ready */
 struct list_head ready_queue;
 /* Puntatore al processo attivo */
