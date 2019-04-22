@@ -2,16 +2,34 @@
 #include "scheduler.h"
 
 void scheduler(void) {
-	pcb_t *old = outProcQ(&ready_queue, current_process);
+	
+    /* Ultimo processo in esecuzione */
+    pcb_t *old = outProcQ(&ready_queue, current_process);
+	
+    /* Se old != NULL */
 	if (old){
-		memcpy(interrupt_oldarea, &old->p_s, sizeof(state_t));
+        /* Ripristino la sua priorità */
 		restorePriority(old);
+        /* Salvo lo stato dell'esecuzione prima dell'eccezione */
+		memcpy(&old->p_s,interrupt_oldarea, sizeof(state_t));
+        /* Reinserisco il processi nella ready_queue */
 		insertProcQ(&ready_queue,current_process);
- 	}     	       
-	current_process = headProcQ(&ready_queue);
-	priorityAging();
-	setTIMER(TIMESLICE * TIMESCALE);
+ 	}     
+	
+    /* Estraggo il processo con priorità più alta dalla ready_queue */
+	current_process = headProcQ(&ready_queue);  
+    
+    /* Controllo se ci sono ancora processi da eseguire */
+    if (current_process == NULL)
+        if(process_count == 0)
+            HALT();
+    
+    /* Imposto il PLT */
+	setTIMER(TIMESLICE * TIME_SCALE);
+    /* Aumento la priorità dei processi che sono nella ready_queue */
+    priorityAging();
 	log_process_order(current_process->original_priority);
+    /* Carico lo stato del processo corrente */
 	LDST(&current_process->p_s);
 }
 
