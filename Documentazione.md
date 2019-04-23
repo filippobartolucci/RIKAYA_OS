@@ -46,3 +46,32 @@ checkEmptyProc(void);
 ```
 che viene chiamata all'inizio dello <b>scheduler</b>.
 Il suo compito è quello di controllare se è presente un processo corrente e il contatore di processi non sia uguale a 0. In caso negativo chiama la funzione di sistema <b>HALT()</b>.
+
+## utils.c
+In questo file sono definite funzioni funzioni ausiliarie per la gestione della memoria, quali
+```
+memset(void *s, u32 c, int n);
+memcpy(void *dest, void *src, u32 n);
+```
+
+## const.h
+Questo file contiene le definizioni delle costanti, aree della ROM, etc...
+In particolare la macro 
+```
+#define STATUS_NEW_AREA (STATUS_CU | STATUS_TE | STATUS_KUc)
+```
+serve per settare lo status delle new area in maniera tale da avere 
+ * Kernel Mode ON
+ * Coprocessore ON
+ * Abilitare il Local Timer
+ 
+e la macro 
+```
+#define STATUS_P (STATUS_KUc | STATUS_TE | (0xFF00 - 0x8000))
+
+```
+serve per settare lo status dei processi in maniera tale da avere 
+ * Kernel Mode ON
+ * Abilitare il Local Timer
+ * Mascherare gli Interrupt
+ 
