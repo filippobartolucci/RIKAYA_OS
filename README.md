@@ -17,12 +17,12 @@ Il test consiste nell'alternare 3 processi (test1,test2 e test3) che che stampan
 ## Compilare per μMPS2
 È necessario avere prima installato [μMPS2](https://github.com/tjonjic/umps).
 
-Per compilare basterà lanciare il comando make dentro la cartella p1.5test_rikaya
+Per compilare basterà lanciare il comando make dentro la cartella PHASE1.5_SO1819/src
 ```
-$ cd p1.5test_rikaya 
+$ cd PHASE1.5_SO1819/src
 $ make 
 ``` 
-Verrano creati due file, kernel.core.umps e kernel.stab.umps, che sono i file da usare per la configurazione della macchina MIPS in μMPS2
+Verrano creati due file, kernel.core.umps e kernel.stab.umps, che sono i file da usare per la configurazione della macchina emulata in μMPS2
 
 # Autori
  * Bartolucci Filippo - filippo.bartolucci2@studio.unibo.it
