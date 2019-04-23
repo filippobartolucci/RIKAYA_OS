@@ -5,9 +5,7 @@
  *						*
  * 	 Componenti del gruppo:	   		*
  *	   - Filippo Bartolucci	   		*
- *	   - Francesco Cerio		  	*
- *	   - Umberto Case		   	*
- *	   - Matteo Celani		   	*/
+ *	   - Francesco Cerio		     	*/
  
 #include "pcb.h"
 #include "const.h"
