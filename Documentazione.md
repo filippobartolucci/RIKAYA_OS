@@ -75,6 +75,7 @@ serve per settare lo status dei processi in maniera tale da avere
  * Abilitare il Local Timer
  * Mascherare gli Interrupt
  
-#Sviluppatori
+ 
+# Sviluppatori
  * Bartolucci Filippo - filippo.bartolucci2@studio.unibo.it
  * Cerio Francesco - francesco.cerio@studio.unibo.it
