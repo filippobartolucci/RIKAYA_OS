@@ -5,9 +5,7 @@
  *						*
  * 	 Componenti del gruppo:	   		*
  *	   - Filippo Bartolucci	   		*
- *	   - Francesco Cerio		  	*
- *	   - Umberto Case		   	*
- *	   - Matteo Celani		   	*/
+ *	   - Francesco Cerio		     	*/
  
 #ifndef _SCHEDULER_H
 #define _SCHEDULER_H
