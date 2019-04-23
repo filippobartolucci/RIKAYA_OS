@@ -1,3 +1,14 @@
+/*						*
+ *		 PHASE1 RIKAYA	   		*
+ *						*
+ * 	 Sviluppato dal gruppo lso19az22 	*
+ *						*
+ * 	 Componenti del gruppo:	   		*
+ *	   - Filippo Bartolucci	   		*
+ *	   - Francesco Cerio		  	*
+ *	   - Umberto Case		   	*
+ *	   - Matteo Celani		   	*/
+ 
 #include "handler.h"
 
 /* Gestione SYSCALL/BREAKPOINT */
@@ -112,11 +123,29 @@ void pgmtrp_handler(void){
  * Ready Queue.
 */
 
-HIDDEN void terminateProcess(pcb_t *p){  
-    while(!list_empty(&p->p_child))
-        freePcb(removeChild(&p->p_child));
-    outChild(p);
-    freePcb(p);
-    process_count--;
-    scheduler();
+HIDDEN void terminateProcess(){
+	pcb_t *p, *child;
+	struct list_head *iter;
+	
+	/* Associo il processo corrente ad un pcb_t interno alla funzione */
+	p = outProcQ(&ready_queue, current_process);
+	
+	/* Itero la lista dei figli del processo e li rimuovo
+	 * spostandoli nella lista dei pcb liberi */
+        list_for_each(iter, &p->p_child){
+		child = container_of(iter, pcb_t, p_sib);
+		outProcQ(&ready_queue, child);
+        	freePcb(removeChild(child));
+	}
+	
+	/* Setto il processo corrente a NULL e libero tutto il resto 
+	 * decremento il process_count e quando non ci sono più processi
+	 * arriva a 0*/
+	current_process = NULL;
+	outChild(p);
+    	freePcb(p);
+    	process_count--;
+
+	/* Il controllo ritorna allo scheduler */
+    	scheduler();
 }

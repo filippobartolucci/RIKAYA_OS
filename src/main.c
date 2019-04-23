@@ -1,3 +1,14 @@
+/*						*
+ *		 PHASE1 RIKAYA	   		*
+ *						*
+ * 	 Sviluppato dal gruppo lso19az22 	*
+ *						*
+ * 	 Componenti del gruppo:	   		*
+ *	   - Filippo Bartolucci	   		*
+ *	   - Francesco Cerio		  	*
+ *	   - Umberto Case		   	*
+ *	   - Matteo Celani		   	*/
+ 
 #include "pcb.h"
 #include "const.h"
 #include "handler.h"
@@ -52,7 +63,7 @@ void setProcess(memaddr proc, int n){
     /* Imposto lo STACK POINTER */
 	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * n;
     /* Imposto lo STATUS del process */
-	tmp->p_s.status = 1 << 2 | 1 << 27 | (0xFF00 - 0x8000) ;
+	tmp->p_s.status = STATUS_P ;
 	
     /* Aumento il contatore dei processi */
 	process_count++;

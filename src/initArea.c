@@ -1,3 +1,14 @@
+/*						*
+ *		 PHASE1 RIKAYA	   		*
+ *						*
+ * 	 Sviluppato dal gruppo lso19az22 	*
+ *						*
+ * 	 Componenti del gruppo:	   		*
+ *	   - Filippo Bartolucci	   		*
+ *	   - Francesco Cerio		  	*
+ *	   - Umberto Case		   	*
+ *	   - Matteo Celani		   	*/
+ 
 #include "pcb.h"
 #include "const.h"
 #include "handler.h"
@@ -48,8 +59,9 @@ HIDDEN inline void initTLB(u32 status){
 */
 void initAREA(void){  
     
-    u32 s = 0; 
-    s |= 1 << 28 | 1 << 27 | 1 << 2 ;
+    u32 s = 0;
+    /* Imposto il valore dello stato tramite la Macro STATUS_NEW_AREA definita in const.h */ 
+    s |= STATUS_NEW_AREA ;
     
     /* Metto a 0 tutte le newarea della roma */
     memset(sysbk_newarea, 0, sizeof(state_t));

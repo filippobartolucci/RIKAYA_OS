@@ -1,3 +1,14 @@
+/*						*
+ *		 PHASE1 RIKAYA	   		*
+ *						*
+ * 	 Sviluppato dal gruppo lso19az22 	*
+ *						*
+ * 	 Componenti del gruppo:	   		*
+ *	   - Filippo Bartolucci	   		*
+ *	   - Francesco Cerio		  	*
+ *	   - Umberto Case		   	*
+ *	   - Matteo Celani		   	*/
+ 
 #include "utils.h"
 
 void *memset(void *s, u32 c, int n){

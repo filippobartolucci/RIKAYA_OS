@@ -33,18 +33,25 @@ typedef unsigned int u32;
 #define WORD_SIZE 4
 
 /* Definitions for the status register */
-#define STATUS_IEc 0x00000001
-#define STATUS_KUc 0x00000002
-#define STATUS_IEp 0x00000004
-#define STATUS_KUp 0x00000008
-#define STATUS_IEo 0x00000010
-#define STATUS_KUo 0x00000020
-#define STATUS_VMc 0x01000000
-#define STATUS_VMp 0x02000000
-#define STATUS_VMo 0x04000000
-#define STATUS_TE  0x08000000
+#define STATUS_KUc 1 << 2
+#define STATUS_TE  1 << 27
+#define STATUS_CU  1 << 28
 
-#define STATUS_P   0x1800FF15
+/* Definisco una Macro per settare lo status all'interno delle New Area, operando con un OR bit a bit imposto:
+ * - Lo stato del coprocessore ad 1
+ * - Local Timer ON
+ * - Kernel Mode ON
+ */
+#define STATUS_NEW_AREA (STATUS_CU | STATUS_TE | STATUS_KUc)
+
+
+/* Definisco una Macro per settare bit a bit lo status dei processi all'interno del main, facendo un OR imposto:
+ *  - Kernel Mode ON
+ *  - Local Timer ON
+ *  - La maschera degli Interrupt
+ */
+#define STATUS_P (STATUS_KUc | STATUS_TE | (0xFF00 - 0x8000))
+
 
 #define DEV_PER_INT 8 /* Maximum number of devices per interrupt line */
 
@@ -62,7 +69,6 @@ typedef unsigned int u32;
 #define SYSBK_NEWAREA 0x200003d4
 #define SYSBK_OLDAREA 0x20000348
 
-#define TIME_SCALE *((unsigned int *)0x10000024)
 
 /* Interrupt lines used by the devices */
 #define INT_PLT 1    

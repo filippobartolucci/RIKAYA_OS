@@ -1,8 +1,26 @@
+/*						*
+ *		 PHASE1 RIKAYA	   		*
+ *						*
+ * 	 Sviluppato dal gruppo lso19az22 	*
+ *						*
+ * 	 Componenti del gruppo:	   		*
+ *	   - Filippo Bartolucci	   		*
+ *	   - Francesco Cerio		  	*
+ *	   - Umberto Case		   	*
+ *	   - Matteo Celani		   	*/
+ 
 #include "listx.h"
 #include "scheduler.h"
 
+/* Funzione ausiliaria per verificare se il processo corrente è vuoto */
+void checkEmptyProc(void){
+	if(current_process == NULL && process_count == 0)
+		HALT();
+}
+
 void scheduler(void) {
 	
+    //checkEmptyProc();
     /* Ultimo processo in esecuzione */
     pcb_t *old = outProcQ(&ready_queue, current_process);
 	
@@ -38,7 +56,7 @@ HIDDEN inline void priorityAging(void) {
 	struct list_head *iter;
 	list_for_each(iter, &ready_queue){
 		pcb_t *tmp = container_of(iter, pcb_t, p_next);
-		if (tmp->priority<20) tmp->priority++;
+		if (tmp->priority < MAXPRIO) tmp->priority++;
 		}
 }
 
