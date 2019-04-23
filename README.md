@@ -10,6 +10,9 @@ Componenti da implementare in questa fase:
 * Gestore delle SYSCALL e SYSCALL3 (terminateprocess)
 * Scheduler con priorità ed aging
 
+## Test
+Il test consiste nel alternare 3 processi (test1,test2 e test3) che che stampano un'immagine sul terminale
+![Test PHASE1.5](/Test.png)
 
 ## Compilare per μMPS2
 È necessario avere prima installato [μMPS2](https://github.com/tjonjic/umps).
