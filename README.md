@@ -27,8 +27,6 @@ Verrano creati due file, kernel.core.umps e kernel.stab.umps, che sono i file da
 # Autori
  * Bartolucci Filippo - filippo.bartolucci2@studio.unibo.it
  * Cerio Francesco    - francesco.cerio@studio.unibo.it
- * Case Umberto       - umberto.case@studio.unibo.it
- * Celani Matteo      - matteo.celani@studio.unibo.it
 
  
 # License 
