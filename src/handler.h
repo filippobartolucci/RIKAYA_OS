@@ -5,10 +5,8 @@
  *						*
  * 	 Componenti del gruppo:	   		*
  *	   - Filippo Bartolucci	   		*
- *	   - Francesco Cerio		  	*
- *	   - Umberto Case		   	*
- *	   - Matteo Celani		   	*/
- 
+ *	   - Francesco Cerio		     	*/
+
 #ifndef _HANDLER_H
 #define _HANDLER_H
 
