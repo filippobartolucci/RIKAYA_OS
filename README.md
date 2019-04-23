@@ -11,7 +11,7 @@ Componenti da implementare in questa fase:
 * Scheduler con priorità ed aging
 
 ## Test
-Il test consiste nel alternare 3 processi (test1,test2 e test3) che che stampano un'immagine sul terminale
+Il test consiste nell'alternare 3 processi (test1,test2 e test3) che che stampano un'immagine sul terminale
 ![Test PHASE1.5](/Test.png)
 
 ## Compilare per μMPS2
