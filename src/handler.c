@@ -24,27 +24,68 @@ void sysbk_handler(void){
      *  u32 *arg2 =  &old_state->reg_a2;
      *  u32 *arg3 =  &old_state->reg_a3;
     */
-        
-    /* Gestione dei BREAKPOINT da implementare nella PHASE2 
-     * Ignorati per PHASE1.5                                
-    */
-        
+    
     switch (syscall_number){
-        /* Eseguo la SYSCALL richiesta */
+        /* SYS 1*/
+        case GETCPUTIME:
+            break:
+        
+        /* SYS 2*/
+        case CREAPROCESS:
+            
+            break:
+        
+        /* SYS 3*/
         case TERMINATEPROCESS:
             terminateProcess();
             break;
+        
+        /* SYS 4*/
+        case PASSEREN:
+            
+            break;
+        
+        /* SYS 5*/
+        case VERHOGEN:
+            
+            break;
+        
+        /* SYS 6*/
+        case WAITCLOCK:
+            
+            break;
+        
+        /* SYS 7*/
+        case WAITIO:
+            
+            break;
+            
+        /* SYS 8*/
+        case SETTUTOR:
+            
+            break;
+        
+        /* SYS 9*/
+        case SPECPASSUP:
+            
+            break;
+        
+        /* SYS 10*/
+        case GETPID;
+            
+            break:
+        
         default:
-            /* Errore numero SYSCALL inesistente */
             PANIC();
     }
-    scheduler();
     
-    /* Gestione dei BREAKPOINT da implementare nella PHASE2 */
+    old_state->pc_epc += WORD_SIZE;
+    scheduler();
 }
 
 /* Gestione INTERRUPT */
 void int_handler(void){
+    
     /* Stato dell'esecuzione prima dell'eccezione */
     state_t *old_state = interrupt_oldarea;
     /* Causa dell'interrupt */
@@ -96,8 +137,6 @@ void int_handler(void){
     
     else/* Terminal */ ;  
 
-
-    /* Gestione degli INTERRUPT dei device da implementare nella PHASE2 */  
 }
 
 /* Gestione TLB */
@@ -110,9 +149,10 @@ void pgmtrp_handler(void){
     /* Da implementare nella PHASE2 */
 }
 
-
 /* SYSTEMCALL */
-/* HIDDEN perché devono essere accessibili solo da sysbk_handler */
+/* HIDDEN, accessibili solo da sysbk_handler */
+
+
 
 
 /* SYSCALL3
@@ -120,7 +160,6 @@ void pgmtrp_handler(void){
  * e tutta la sua progenie, rimuovendoli dalla
  * Ready Queue.
 */
-
 HIDDEN void terminateProcess(){
 	pcb_t *p, *child;
 	struct list_head *iter;
