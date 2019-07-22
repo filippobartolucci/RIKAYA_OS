@@ -1,5 +1,4 @@
 # PKAYA_OS
-# PHASE2_SO1819
 Fase 2 del progetto del corso Sistemi Operativi 18/19 UniBO 
 
 # Progetto 
