@@ -2,7 +2,7 @@
 Fase 1.5 del progetto del corso Sistemi Operativi 18/19 UniBO 
 
 # Progetto 
-![Schema OS](/Livelli.png)
+![Schema OS](./Livelli.png)
 
 Componenti da implementare in questa fase:
 * Inizializzazione del sistema
@@ -12,7 +12,7 @@ Componenti da implementare in questa fase:
 
 ## Test
 Il test consiste nell'alternare 3 processi (test1,test2 e test3) che che stampano un'immagine sul terminale
-![Test PHASE1.5](/Test.png)
+![Test PHASE1.5](./Test.png)
 
 ## Compilare per μMPS2
 È necessario avere prima installato [μMPS2](https://github.com/tjonjic/umps).
