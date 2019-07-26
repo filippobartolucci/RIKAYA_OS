@@ -18,74 +18,42 @@ void sysbk_handler(void){
     /* Registro nel quale è salvata la SYSCALL chiamata */
     u32 syscall_number = old_state->reg_a0;
         
-    /* Parametri della SYSCALL 
-     * Inutilizzati in PHASE1.5
-     *  u32 *arg1 =  &old_state->reg_a1;
-     *  u32 *arg2 =  &old_state->reg_a2;
-     *  u32 *arg3 =  &old_state->reg_a3;
+    /* Parametri della SYSCALL */ 
+     u32 *arg1 =  &old_state->reg_a1;
+     u32 *arg2 =  &old_state->reg_a2;
+     u32 *arg3 =  &old_state->reg_a3;
+        
+    /* Gestione dei BREAKPOINT da implementare nella PHASE2 
+     * Ignorati per PHASE1.5                                
     */
-    
+
+     int flag = 0;
+        
     switch (syscall_number){
-        /* SYS 1*/
-        case GETCPUTIME:
-            break:
-        
-        /* SYS 2*/
-        case CREAPROCESS:
-            
-            break:
-        
-        /* SYS 3*/
+        /* Eseguo la SYSCALL richiesta */
         case TERMINATEPROCESS:
             terminateProcess();
             break;
-        
-        /* SYS 4*/
-        case PASSEREN:
-            
-            break;
-        
-        /* SYS 5*/
-        case VERHOGEN:
-            
-            break;
-        
-        /* SYS 6*/
-        case WAITCLOCK:
-            
-            break;
-        
-        /* SYS 7*/
-        case WAITIO:
-            
-            break;
-            
-        /* SYS 8*/
-        case SETTUTOR:
-            
-            break;
-        
-        /* SYS 9*/
-        case SPECPASSUP:
-            
-            break;
-        
-        /* SYS 10*/
-        case GETPID;
-            
-            break:
-        
+	case GETCPUTIME:
+	    getCpuTime(arg1, arg2, arg3);
+	    break;
+	case CREATEPROCESS:
+	    flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
+	    break;
+	case VERHOGEN:
+	    verhogen((int*)arg1);
+	    break;
         default:
+            /* Errore numero SYSCALL inesistente */
             PANIC();
     }
-    
-    old_state->pc_epc += WORD_SIZE;
     scheduler();
+    
+    /* Gestione dei BREAKPOINT da implementare nella PHASE2 */
 }
 
 /* Gestione INTERRUPT */
 void int_handler(void){
-    
     /* Stato dell'esecuzione prima dell'eccezione */
     state_t *old_state = interrupt_oldarea;
     /* Causa dell'interrupt */
@@ -137,6 +105,8 @@ void int_handler(void){
     
     else/* Terminal */ ;  
 
+
+    /* Gestione degli INTERRUPT dei device da implementare nella PHASE2 */  
 }
 
 /* Gestione TLB */
@@ -149,9 +119,56 @@ void pgmtrp_handler(void){
     /* Da implementare nella PHASE2 */
 }
 
-/* SYSTEMCALL */
-/* HIDDEN, accessibili solo da sysbk_handler */
 
+/* SYSTEMCALL */
+/* HIDDEN perché devono essere accessibili solo da sysbk_handler */
+
+HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* wallclock){
+	/* Assegno il pcb corrente ad un pcb interno alla funzione e
+	 * aggiorno il tempo prima di ritronare il valore */
+	pcb_t* pcb = outProcQ(&ready_queue, current_process);
+	pcb->kernel_time += TOD_LO -pcb->kernel_time_start;
+	pcb->kernel_time_start = TOD_LO;
+	
+	if(user)
+		*user = pcb->user_time;
+
+	if(kernel)
+		*kernel = pcb->kernel_time;
+
+	if(wallclock)
+		*wallclock = TOD_LO - pcb->total_time;
+}
+
+/* SYSCALL2
+ * Quando invocata crea un processo figlio del chiamante.
+ * I valori di PC e $SP sono dentro *statep 
+ * cpid contiene l'ID del processo figlio 
+ */
+HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
+	pcb_t* child = allocPcb();
+	
+	if(cpid)
+		*((pcb_t **)cpid) = child;
+	
+	if(!child)
+		return -1;
+
+	/* Setto i valori delllo stato */
+	memcpy(&child->p_s, statep, sizeof(state_t));
+	
+	/* Setto i valori delle priorità */
+	child->original_priority = child->priority = priority;
+
+	/* Setto i valori del tempo di esecuzione */
+	child->total_time = TOD_LO;
+
+	/* Inserisco il processo come figlio del chiamante */
+	insertChild(current_process, child);
+	insertProcQ(&ready_queue, child);
+	
+	return 0;
+}
 
 
 
@@ -160,6 +177,7 @@ void pgmtrp_handler(void){
  * e tutta la sua progenie, rimuovendoli dalla
  * Ready Queue.
 */
+
 HIDDEN void terminateProcess(){
 	pcb_t *p, *child;
 	struct list_head *iter;
@@ -185,4 +203,20 @@ HIDDEN void terminateProcess(){
 
 	/* Il controllo ritorna allo scheduler */
     	scheduler();
+}
+
+/* SYSCALL4
+ * Operazione di rilascio su un semaforo
+ * Il valore del semaforo è memorizzato nella variabile passata come parametro
+ */
+HIDDEN void verhogen(int* semaddr){
+	*semaddr+=1;
+	pcb_t* blocked;
+	if(*semaddr <= 0){
+		blocked = removeBlocked(semaddr);
+		blocked->priority = blocked->original_priority;
+	}
+	
+	if(blocked)
+		insertProcQ(&ready_queue, blocked);
 }
