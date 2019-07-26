@@ -1,3 +1,4 @@
+
 #ifndef _TYPES11_H
 #define _TYPES11_H
 
@@ -25,6 +26,13 @@ typedef struct pcb_t {
 
 	/* key of the semaphore on which the process is eventually blocked */
 	int			*p_semkey;
+
+	/* execution time for each process */
+	unsigned int 		user_time_start;
+	unsigned int		user_time;
+	unsigned int 		kernel_time_start;
+	unsigned int 		kernel_time;
+	unsigned int		total_time;
 } pcb_t;
 
 
