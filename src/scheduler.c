@@ -24,11 +24,11 @@ void scheduler(void) {
 	
     /* Se old != NULL */
 	if (old){
-        /* Ripristino la sua priorità */
+        	/* Ripristino la sua priorità */
 		restorePriority(old);
-        /* Salvo lo stato dell'esecuzione prima dell'eccezione */
+        	/* Salvo lo stato dell'esecuzione prima dell'eccezione */
 		memcpy(&old->p_s,interrupt_oldarea, sizeof(state_t));
-        /* Reinserisco il processi nella ready_queue */
+        	/* Reinserisco il processi nella ready_queue */
 		insertProcQ(&ready_queue,current_process);
  	}     
 	
@@ -41,12 +41,12 @@ void scheduler(void) {
             HALT();
     
     /* Imposto il PLT */
-	setTIMER(TIMESLICE * TIME_SCALE);
+    setTIMER(TIMESLICE * TIME_SCALE);
     /* Aumento la priorità dei processi che sono nella ready_queue */
     priorityAging();
-	log_process_order(current_process->original_priority);
+    log_process_order(current_process->original_priority);
     /* Carico lo stato del processo corrente */
-	LDST(&current_process->p_s);
+    LDST(&current_process->p_s);
 }
 
 /* Funzione che si occupa del meccanismo di aging delle priorità dei PCB nella ready queue */
