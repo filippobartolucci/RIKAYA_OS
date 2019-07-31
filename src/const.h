@@ -79,12 +79,29 @@ typedef unsigned int u32;
 #define INT_PRINTER 6
 #define INT_TERMINAL 7
 
+/* Interrupting devices bitmaps addresses  */
+#define INT_BITMAP_DISK 0x1000003c
+#define INT_BITMAP_TAPE 0x10000040
+#define INT_BITMAP_NET 0x10000044
+#define INT_BITMAP_PRINTER 0x10000048
+#define INT_BITMAP_TERMINAL 0x1000004C
+
 /* Device Commands */
 #define DEV_ACK   1
 
 
 /* System Call */
+#define GETCPUTIME 1
+#define CREATEPROCESS 2
 #define TERMINATEPROCESS 3
+#define VERHOGEN 4
+#define PASSEREN 5
+#define WAITCLOCK 6
+#define WAITIO 7
+#define SETTUTOR 8
+#define SPECPASSUP 9
+#define GETPID 10
+
 
 /*Define Time-Slice*/
 #define TIMESLICE 3000
