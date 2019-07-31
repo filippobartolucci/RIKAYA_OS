@@ -5,7 +5,11 @@ Fase 2 del progetto del corso Sistemi Operativi 18/19 UniBO
 ![Schema OS](./Livelli.png)
 
 Componenti da implementare in questa fase:
-*
+
+* Gestione delle SYSCALL
+* Gestione delle INTERRUPT
+* Gestione delle eccezioni
+
 ## Test
 
 
