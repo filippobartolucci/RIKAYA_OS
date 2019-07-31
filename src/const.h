@@ -80,7 +80,7 @@ typedef unsigned int u32;
 #define INT_TERMINAL 7
 
 /* Device Commands */
-#define DEV_C_ACK   1
+#define DEV_ACK   1
 
 
 /* System Call */
