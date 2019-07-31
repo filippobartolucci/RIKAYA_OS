@@ -61,9 +61,10 @@ void int_handler(void){
     u32 cause = old_state->cause;
    
 	/* Struttura per il dispositivo */
-    dtpreg_t* dev;	
+    dtpreg_t *dev;	
 	/* Struttura per il terminale */
-
+	termreg_t *term;
+	
     /* Cerco il dispositivo che ha sollevato l'interrupt */
     u32 line;
 	
