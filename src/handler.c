@@ -103,7 +103,7 @@ void int_handler(void){
         /* Interrupt Line 5 */
 
     else if (cause == (cause | 0x40)){   /* 01000000 */
-		int dev_num = findDevice;
+	int dev_num = findDevice((u32*)INT_BITMAP_PRINTER);
 	}
         /* Printer */
     
@@ -114,6 +114,8 @@ void int_handler(void){
 }
 
 
+/* 
+Funzione per trovare quale dispositivo ha causato l'interrupt
 HIDDEN int findDevice(u32* bitmap) {
   int device_n = 0; 
   while (*bitmap > 1) {
@@ -123,7 +125,12 @@ HIDDEN int findDevice(u32* bitmap) {
   return device_n;
 }
 
+*/
 
+
+
+
+/*FINE INTERRUPT*/ 
 
 /* Gestione TLB */
 void tlb_handler(void){
