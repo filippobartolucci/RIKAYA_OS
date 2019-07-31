@@ -59,11 +59,14 @@ void int_handler(void){
     state_t *old_state = interrupt_oldarea;
     /* Causa dell'interrupt */
     u32 cause = old_state->cause;
-    
-    dtpreg_t* int_dev;	
+   
+	/* Struttura per il dispositivo */
+    dtpreg_t* dev;	
+	/* Struttura per il terminale */
 
-    /* Cerco il device che ha sollevato l'interrupt */
-    
+    /* Cerco il dispositivo che ha sollevato l'interrupt */
+    u32 line;
+	
     /* I bit da 8 a 15 indicano quale linea interrupt sia attiva
      * Utilizziamo uno shift per eliminare i bit meno significativi che non ci servono
     */  
@@ -75,37 +78,50 @@ void int_handler(void){
      * I bit meno significativi hanno priorità
      * maggiore. Il controllo confronta 
      * la causa dell'interrupt con una causa in 
-     * cui il bit del device che si sta controllando è a 1.
+     * cui il bit del dispositivo che si sta controllando è a 1.
     */
 
     if (cause == (cause | 0x1))          /* 00000001 */	  
-        ;
+        line = 0;
         /* Interrupt Line 0 */
     
     else if (cause == (cause | 0x2))     /* 00000010 */  
-	/* Processor Local Timer */
+		/* Processor Local Timer */
         scheduler();
 
     else if (cause == (cause | 0x4))     /* 00000100 */	
-        ;
+        line = 2;
         /* Interrupt Line 2 */
 
     else if (cause == (cause | 0x8))     /* 00001000 */
-	;
+		line = 3;
         /* Disk */
 
     else if (cause == (cause | 0x10))	 /* 00010000 */	
-	;
+		line = 4;
         /* Tape */
 		
     else if (cause == (cause | 0x20))    /* 00100000 */
-	;
+		line = 5;
         /* Interrupt Line 5 */
 
     else if (cause == (cause | 0x40)){   /* 01000000 */
-	int dev_num = findDevice((u32*)INT_BITMAP_PRINTER);
+		/* Interrupt Line 6 */	
+		line = 6;
+		int dev_num = whichDevice((u32*)INT_BITMAP_PRINTER);
+		
+		/*
+		Codice per i semafori e processi bloccati ai semafori
+		*/
+		
+		/* Invio l'ACK al dispositivo trovato */
+		dev = (dtpreg_t *)DEV_REG_ADDR(line,dev_num);
+		dev->command = DEV_ACK; 
+		
+		/* Attendo che il dispositivo sia di nuovo ready */
+		while(dev->status != DEV_ST_READY);		
 	}
-        /* Printer */
+    /* Printer */
     
     else /* Terminal */ ;  
 
@@ -116,7 +132,7 @@ void int_handler(void){
 
 /* 
 Funzione per trovare quale dispositivo ha causato l'interrupt
-HIDDEN int findDevice(u32* bitmap) {
+HIDDEN int whichDevice(u32* bitmap) {
   int device_n = 0; 
   while (*bitmap > 1) {
     device_n++;
@@ -134,12 +150,12 @@ HIDDEN int findDevice(u32* bitmap) {
 
 /* Gestione TLB */
 void tlb_handler(void){
-    /* Da implementare nella PHASE2 */
+    
 }
 
 /* Gestione PGMTRP */
 void pgmtrp_handler(void){
-    /* Da implementare nella PHASE2 */
+   
 }
 
 
@@ -148,7 +164,7 @@ void pgmtrp_handler(void){
 
 HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* wallclock){
 	/* Assegno il pcb corrente ad un pcb interno alla funzione e
-	 * aggiorno il tempo prima di ritronare il valore 
+	 * aggiorno il tempo prima di restituire il valore 
 	*/
 	pcb_t* pcb = outProcQ(&ready_queue, current_process);
 	pcb->kernel_time += TOD_LO -pcb->kernel_time_start;
