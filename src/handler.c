@@ -31,25 +31,57 @@ void sysbk_handler(void){
         
     switch (syscall_number){
         /* Eseguo la SYSCALL richiesta */
-        case TERMINATEPROCESS:
+		case GETCPUTIME:
+	    	getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
+	    	break;
+			
+		case CREATEPROCESS:
+	   		flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
+	    	break;
+			
+		case VERHOGEN:
+	    	verhogen((int*)arg1);
+	    	break;
+			
+		case TERMINATEPROCESS:
             terminateProcess();
             break;
-	case GETCPUTIME:
-	    getCpuTime(arg1, arg2, arg3);
-	    break;
-	case CREATEPROCESS:
-	    flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
-	    break;
-	case VERHOGEN:
-	    verhogen((int*)arg1);
-	    break;
+			
+
+		case PASSEREN:
+      		Passeren();
+      		break;
+
+  	  	case VERHOGEN:
+    	 	Verhogen();
+      		break;
+		
+		case WAITCLOCK:
+      		Wait_Clock();
+ 		    break;
+
+    	case WAITIO:
+      		Do_IO();
+      		break;
+
+    	case SETTUTOR:
+      		Set_Tutor();
+      		break;
+
+    	case SPECPASSUP:
+     		ret = Spec_Passup();
+      		break;
+
+    	case GETPID:
+      		Get_pid_ppid();
+      		break;
+
         default:
             /* Errore numero SYSCALL inesistente */
             PANIC();
     }
-    scheduler();
-    
-    /* Gestione dei BREAKPOINT da implementare nella PHASE2 */
+	
+    scheduler();  
 }
 
 /* Gestione INTERRUPT */
