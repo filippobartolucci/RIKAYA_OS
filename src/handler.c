@@ -39,10 +39,6 @@ void sysbk_handler(void){
 	   		flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
 	    	break;
 			
-		case VERHOGEN:
-	    	verhogen((int*)arg1);
-	    	break;
-			
 		case TERMINATEPROCESS:
             terminateProcess();
             break;
@@ -69,7 +65,7 @@ void sysbk_handler(void){
       		break;
 
     	case SPECPASSUP:
-     		ret = Spec_Passup();
+     		flag = Spec_Passup();
       		break;
 
     	case GETPID:
@@ -116,7 +112,7 @@ void int_handler(void){
 
     if (cause == (cause | 0x1))          /* 00000001 */	  
         line = 0;
-        /* Interrupt Line 0 */
+        /* Inter-processor-interrupts */
     
     else if (cause == (cause | 0x2))     /* 00000010 */  
 		/* Processor Local Timer */
@@ -124,7 +120,7 @@ void int_handler(void){
 
     else if (cause == (cause | 0x4))     /* 00000100 */	
         line = 2;
-        /* Interrupt Line 2 */
+        /* Interval timer */
 
     else if (cause == (cause | 0x8))     /* 00001000 */
 		line = 3;
@@ -136,65 +132,83 @@ void int_handler(void){
 		
     else if (cause == (cause | 0x20))    /* 00100000 */
 		line = 5;
-        /* Interrupt Line 5 */
+        /* Network */
 
     else if (cause == (cause | 0x40)){   /* 01000000 */
-		/* Interrupt Line 6 */	
+		/* Printer */
 		line = 6;
+        /* Cerco quale stampante ha causato l'interrupt */
 		int dev_num = whichDevice((u32*)INT_BITMAP_PRINTER);
 		
-		/*
-		Codice per i semafori e processi bloccati ai semafori
-		*/
+		// Codice per i semafori e processi bloccati ai semafori
 		
-		/* Invio l'ACK al dispositivo trovato */
+		/* Invio l'ACK alla stampante */
 		dev = (dtpreg_t *)DEV_REG_ADDR(line,dev_num);
 		dev->command = DEV_ACK; 
 		
-		/* Attendo che il dispositivo sia di nuovo ready */
+		/* Attendo che sia di nuovo ready */
 		while(dev->status != DEV_ST_READY);		
 	}
-    /* Printer */
+    
     
     else /* Terminal */ ;  
 
-
-    /* Gestione degli INTERRUPT dei device da implementare nella PHASE2 */  
+    if (current_process)
+        LDST(&old_state);
+    else scheduler();
+    
 }
 
 
-/* 
-Funzione per trovare quale dispositivo ha causato l'interrupt
+/* Funzione per trovare quale dispositivo ha causato l'interrupt */
 HIDDEN int whichDevice(u32* bitmap) {
-  int device_n = 0; 
+  int dev_n = 0;
   while (*bitmap > 1) {
-    device_n++;
+    dev_n++;
     *bitmap >>= 1;
   }
-  return device_n;
+  return dev_n;
 }
 
-*/
+
 
 
 
 
 /*FINE INTERRUPT*/ 
 
+
+
+
 /* Gestione TLB */
 void tlb_handler(void){
-    
+    state_t* old = tlbmgt_oldarea;
+    old->pc_epc += WORD_SIZE;
 }
 
 /* Gestione PGMTRP */
 void pgmtrp_handler(void){
-   
+    state_t* old = program_trap_oldarea;
+    old->pc_epc += WORD_SIZE;
 }
+
+
+
+
+
+
 
 
 /* SYSTEMCALL */
 /* HIDDEN perché accessibili solo da sysbk_handler */
 
+/* SYSCALL 1
+ * Quando invocata restituisce il tempo di esecuzione del processo
+ * che l'ha chiamata fino a quel momento, separato in tre variabili:
+ *  - Tempo usato dal processo come utente (user)
+ *  - Tempo usato dal processo come kernel (tempi di SYSCALL e INTERRUPT relativi al processo
+ *  - Tempo totale trascorso dalla prima attivazione del processo
+*/
 HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* wallclock){
 	/* Assegno il pcb corrente ad un pcb interno alla funzione e
 	 * aggiorno il tempo prima di restituire il valore 
@@ -246,42 +260,46 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
 
 
 /* SYSCALL3
- * Quando invocata termina il processo corrente
- * e tutta la sua progenie, rimuovendoli dalla
- * Ready Queue.
+ * Quando invocata termina il processo identificato dal PID
+ * (corrente se PID == 0 o NULL), ma non la sua progenie. I processi
+ * figli vengono adottati dal primo antenato che sia marcato come tutor.
+ * Restituiscce 0 se ha successo e -1 in caso di errore
 */
-HIDDEN void terminateProcess(){
-	pcb_t *p, *child;
+HIDDEN void terminateProcess(void ** pid){
+	/*
+    pcb_t *p, *child;
 	struct list_head *iter;
 	
-	/* Associo il processo corrente ad un pcb_t interno alla funzione */
+	/* Associo il processo corrente ad un pcb_t interno alla funzione
 	p = outProcQ(&ready_queue, current_process);
 	
 	/* Itero la lista dei figli del processo e li rimuovo
-	 * spostandoli nella lista dei pcb liberi */
-        list_for_each(iter, &p->p_child){
+	 * spostandoli nella lista dei pcb liberi
+    list_for_each(iter, &p->p_child){
 		child = container_of(iter, pcb_t, p_sib);
 		outProcQ(&ready_queue, child);
-        	freePcb(removeChild(child));
+        freePcb(removeChild(child));
 	}
 	
 	/* Setto il processo corrente a NULL e libero tutto il resto 
 	 * decremento il process_count e quando non ci sono più processi
-	 * arriva a 0*/
+	 * arriva a 0
 	current_process = NULL;
 	outChild(p);
-    	freePcb(p);
-    	process_count--;
+    freePcb(p);
+    process_count--;
 
 	/* Il controllo ritorna allo scheduler */
-    	scheduler();
+    
+    // DA RIFARE, cambiata implementazione
+    scheduler();
 }
 
 /* SYSCALL4
  * Operazione di rilascio su un semaforo
  * Il valore del semaforo è memorizzato nella variabile passata come parametro
  */
-HIDDEN void verhogen(int* semaddr){
+HIDDEN void Verhogen(int* semaddr){
 	*semaddr+=1;
 	pcb_t* blocked;
 	if(*semaddr <= 0){
@@ -294,4 +312,66 @@ HIDDEN void verhogen(int* semaddr){
 }
 
 
+/* SYSCALL5
+ * Operazione di richiesta di un semaforo.
+ * Il valore del semaforo è memorizzato nella
+ * variabile di tipo intero passata per indirizzo.
+ * L'indirizzo della variabile agisce da identificatore per il semaforo
+*/
+HIDDEN void Passeren(int *semaddr){
+    
+}
 
+
+/* SYSCALL6
+ * Sospende il processo che la invoca fino
+ * al prossimo tick del clock di sistema
+*/
+HIDDEN void Wait_Clock(void){
+    
+}
+
+/* SYSCALL 7
+ * Attiva un'operazione di I/O copiando nel parametro
+ * command nel campo comando del registro del dispositivo
+ * indicato come puntatore nel secondo argomento.
+ * Il valore restituito è il contenuto del registro di status del dispositivo
+*/
+HIDDEN int Do_IO(u32 command,u32* register){
+    
+}
+
+/* SYSCALL 8
+ * Indica al kernel che il processo che la invoca
+ * deve agire da tutor per i procecssi discendenti
+ * che dovessero trovarsi orfani
+*/
+HIDDEN void Set_Tutor(){
+
+}
+
+/* SYSCALL 9
+ * Questa chiamata registra quale handler di livello superiore
+ * debba essere attivato in caso di trap di Syscall/breakpoint
+ * (type=0), TLB (type=1) o Program trap (type=2).
+ * Il significato dei parametri old e new è lo stesso delle
+ * aree old e new gestite dal codice della ROM:
+ * quando avviene una trap da passare al gestore lo stato
+ * del processo che ha causato la trap viene posto nell’area
+ * old e viene caricato o stato presente nell’area new.
+ * La system call deve essere richiamata una sola volta per tipo.
+ * Se la system call ha successo restituisce 0, altrimenti -1.
+*/
+HIDDEN int Spec_Passup(int type, state_t *old, state_t *new){
+    
+}
+
+
+/* SYSCALL 10
+ * Assegna il l’identificativo del processo corrente
+ * a *pid (se pid != NULL) e l’identificativo del
+ * processo genitore a *ppid (se ppid != NULL)
+*/
+HIDDEN void Get_pid_ppid(void ** pid, void ** ppid){
+    
+}

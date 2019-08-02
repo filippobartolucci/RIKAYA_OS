@@ -1,5 +1,5 @@
 /*						*
- *		 PHASE1 RIKAYA	   		*
+ *		 PHASE2 RIKAYA	   		*
  *						*
  * 	 Sviluppato dal gruppo lso19az22 	*
  *						*
@@ -14,13 +14,10 @@
 #include "initArea.h"
 #include "utils.h"
 
-void checkEmptyProc(void);
-
 void scheduler();
 
+HIDDEN inline void checkEmptyProc(void);
 HIDDEN inline void priorityAging(void);
 HIDDEN inline void restorePriority(pcb_t *pcb);
-
-extern void log_process_order(u32 n);
 
 #endif 
