@@ -16,10 +16,9 @@
 #include "initArea.h"
 #include "utils.h"
 
-/* Funzioni di test per PHASE1.5 */
-extern void test1();
-extern void test2();
-extern void test3();
+/* Funzioni di test per PHASE2 */
+extern void test();
+
 
 /* Lista dei processi ready */
 LIST_HEAD(ready_queue);
@@ -40,15 +39,7 @@ state_t *program_trap_oldarea = (state_t *)PGMTRAP_OLDAREA;
 state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
 state_t *tblmgt_oldarea = (state_t *)TLB_OLDAREA;
 
-/* Funzione che si occupa di caricare i processi nello scheduler 
- * settando in maniera oppurtuna i vari campi:
- *    - Interrupt ON;
- *    - Virtual Memory OFF;
- *    - Processor Local Timer ON;
- *    - $SP a RAMSIZE-FRAMESIZE*n;
- *    - Priorità uguale ad n
- *    - pc_epc = (memaddr) testn;
-*/
+
 void setProcess(memaddr proc, int n){
     /* Prendo un PCB dalla lista dei PCB liberi */
 	pcb_t *tmp = allocPcb();
@@ -81,9 +72,7 @@ int main(void){
 
     termprint("- Caricamento processi di test\n", 0);
     
-    setProcess((memaddr)test1, 1);
-    setProcess((memaddr)test2, 2);
-    setProcess((memaddr)test3, 3);
+    setProcess((u32*)test,1);
 
     termprint("- Avvio dello scheduler\n\n",0);
 	

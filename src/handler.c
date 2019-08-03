@@ -266,33 +266,71 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
  * Restituiscce 0 se ha successo e -1 in caso di errore
 */
 HIDDEN void terminateProcess(void ** pid){
-	/*
-    pcb_t *p, *child;
-	struct list_head *iter;
-	
-	/* Associo il processo corrente ad un pcb_t interno alla funzione
-	p = outProcQ(&ready_queue, current_process);
-	
-	/* Itero la lista dei figli del processo e li rimuovo
-	 * spostandoli nella lista dei pcb liberi
-    list_for_each(iter, &p->p_child){
-		child = container_of(iter, pcb_t, p_sib);
-		outProcQ(&ready_queue, child);
-        freePcb(removeChild(child));
-	}
-	
-	/* Setto il processo corrente a NULL e libero tutto il resto 
-	 * decremento il process_count e quando non ci sono più processi
-	 * arriva a 0
-	current_process = NULL;
-	outChild(p);
-    freePcb(p);
-    process_count--;
-
-	/* Il controllo ritorna allo scheduler */
+    /* PCB da terminare */
+    pcb_t *victim = NULL;
     
-    // DA RIFARE, cambiata implementazione
-    scheduler();
+    /* Determino la vittima */
+    if (pid == NULL or pid == 0){
+        victim = current_process;
+    }else {
+        victim = (pcb *)pid;
+    }
+    
+    /* Controllo se la vittima è il processo root */
+    if (victim->p_parent == NULL)
+        return -1;
+    
+    pcb_t *tut = current_process;
+    
+    
+    // DA CONTROLLARE 
+    /* Se il processo vittima è diverso dal processo corrente */
+    if (pid!= NULL or pid !=0){
+        /* Controllo che la vittima sia un discendente del processo corrente */
+        while ((tut = tut->p_parent)){
+            if (tut == current_process)
+                break;
+            /* Altrimenti restituisco un errore */
+            else if (tut->p_parent == NULL)
+                return -1;
+        }
+    }
+ 
+    /* Trovo un pcb che possa fare da tutore ai figli della vittima */
+    tut = victim;
+    while (tut->tutor != true)
+        tut = tut->p_parent;
+    
+    /* Assegno tutti i figli della vittima al pcb tutore */
+    pcb_t *child = NULL;
+    while ((child = removeChild(victim))!= NULL)
+        insertChild(tut, child);
+    
+    /* Rimuovo la vittima dalla lista dei figli del padre */
+    outChild(victim);
+    /* Rimuovo la vittima dalla ready_queue */
+    outProcQ(&ready_queue, victim);
+    
+    //------------------------------------------------------------
+    /* Rilascio dell'eventuale semaforo della vittima
+    if (victim->p_semKey)
+        (*victim->p_semKey)++;
+    //------------------------------------------------------------
+     
+    /* Rimuovo la vittima dalla coda del semaforo */
+    outBlocked(victim);
+    /* Restituisco il pcb alla lista libera */
+    freePcb(victim);
+    
+    
+    if (pid == NULL or pid == 0){
+        /* Se il chiamante si è suicidato il controllo va allo scheduler */
+        current_process = NULL;
+        scheduler();
+    }
+    
+    /* Controllo ritorna al chiamante */
+    return 0;
 }
 
 /* SYSCALL4
@@ -347,7 +385,7 @@ HIDDEN int Do_IO(u32 command,u32* register){
  * che dovessero trovarsi orfani
 */
 HIDDEN void Set_Tutor(){
-
+    current_process->tutor = true;
 }
 
 /* SYSCALL 9
@@ -373,5 +411,6 @@ HIDDEN int Spec_Passup(int type, state_t *old, state_t *new){
  * processo genitore a *ppid (se ppid != NULL)
 */
 HIDDEN void Get_pid_ppid(void ** pid, void ** ppid){
-    
+    if (pid)  *pid = current_process;
+    if (ppid) *ppid = current_process->p_parent;
 }

@@ -15,14 +15,16 @@ typedef struct pcb_t {
 	/*process tree fields */
 	struct pcb_t		*p_parent;
 	struct list_head	p_child,
-				p_sib;
+                        p_sib;
 
 	/* processor state, etc */
 	state_t       		p_s;     
 
 	/* process priority */
 	int			priority;
-	int 			original_priority;
+	int 		original_priority;
+    
+    bool tutor;
 
 	/* key of the semaphore on which the process is eventually blocked */
 	int			*p_semkey;
@@ -47,5 +49,15 @@ typedef struct semd_t {
 	// Queue of PCBs blocked on the semaphore
 	struct list_head	s_procQ;
 } semd_t;
+
+
+typedef struct semdev {
+    semd_t disk[DEV_PER_INT];
+    semd_t tape[DEV_PER_INT];
+    semd_t network[DEV_PER_INT];
+    semd_t printer[DEV_PER_INT];
+    semd_t terminalR[DEV_PER_INT];
+    semd_t terminalT[DEV_PER_INT];
+} semdev;
 
 #endif

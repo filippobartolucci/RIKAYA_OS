@@ -61,7 +61,8 @@ pcb_t *allocPcb(void){
 	tmp->p_s.cause = 0;
 	tmp->p_s.status = 0;
 	tmp->p_s.pc_epc = 0;
-	
+    tmp->tutor = false;
+    
 	/* Per il campo p_s.gpr[] uso un for per settare a 0 tutti le 29 variabili dell' array */
 	int j = 0;
 	for(;j<29;j++){
