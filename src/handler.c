@@ -31,27 +31,27 @@ void sysbk_handler(void){
         
     switch (syscall_number){
         /* Eseguo la SYSCALL richiesta */
-		case GETCPUTIME:
-	    	getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
+	case GETCPUTIME:
+		getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
+	 	break;
+			
+	case CREATEPROCESS:
+	   	flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
 	    	break;
 			
-		case CREATEPROCESS:
-	   		flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
-	    	break;
-			
-		case TERMINATEPROCESS:
-            flag = terminateProcess((void **) arg1);
-            break;
+	case TERMINATEPROCESS:
+            	flag = terminateProcess((void **) arg1);
+            	break;
 
-		case PASSEREN:
+	case PASSEREN:
       		Passeren((int *) arg1);
       		break;
 
-  	  	case VERHOGEN:
+  	case VERHOGEN:
     	 	Verhogen((int *) arg1);
       		break;
 		
-		case WAITCLOCK:
+	case WAITCLOCK:
       		Wait_Clock();
  		    break;
 
