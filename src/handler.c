@@ -267,7 +267,7 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
  * figli vengono adottati dal primo antenato che sia marcato come tutor.
  * Restituiscce 0 se ha successo e -1 in caso di errore
 */
-HIDDEN void terminateProcess(void ** pid){
+HIDDEN int terminateProcess(void ** pid){
     /* PCB da terminare */
     pcb_t *victim = NULL;
     
@@ -374,7 +374,7 @@ HIDDEN void Wait_Clock(void){
  * Attiva un'operazione di I/O copiando nel parametro
  * command nel campo comando del registro del dispositivo
  * indicato come puntatore nel secondo argomento.
- * Il valore restituito è il contenuto del registro di status del dispositivo
+ * Il valore restituito è il contenuto del registro di status del dispositivo
 */
 HIDDEN int Do_IO(u32 command,u32 *register){
     ;
@@ -393,7 +393,7 @@ HIDDEN void Set_Tutor(){
  * Questa chiamata registra quale handler di livello superiore
  * debba essere attivato in caso di trap di Syscall/breakpoint
  * (type=0), TLB (type=1) o Program trap (type=2).
- * Il significato dei parametri old e new è lo stesso delle
+ * Il significato dei parametri old e new è lo stesso delle
  * aree old e new gestite dal codice della ROM:
  * quando avviene una trap da passare al gestore lo stato
  * del processo che ha causato la trap viene posto nell’area
