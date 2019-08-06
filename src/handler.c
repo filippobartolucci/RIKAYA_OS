@@ -275,7 +275,7 @@ HIDDEN void terminateProcess(void ** pid){
     if (pid == NULL){
         victim = current_process;
     }else {
-        victim = (pcb *)pid;
+        victim = (pcb_t *)pid;
     }
     
     /* Controllo se la vittima è il processo root */
@@ -358,7 +358,7 @@ HIDDEN void Verhogen(int* semaddr){
  * L'indirizzo della variabile agisce da identificatore per il semaforo
 */
 HIDDEN void Passeren(int *semaddr){
-    
+    ;
 }
 
 
@@ -367,7 +367,7 @@ HIDDEN void Passeren(int *semaddr){
  * al prossimo tick del clock di sistema
 */
 HIDDEN void Wait_Clock(void){
-    
+    ;
 }
 
 /* SYSCALL 7
@@ -376,8 +376,8 @@ HIDDEN void Wait_Clock(void){
  * indicato come puntatore nel secondo argomento.
  * Il valore restituito è il contenuto del registro di status del dispositivo
 */
-HIDDEN int Do_IO(u32 command,u32* register){
-    
+HIDDEN int Do_IO(u32 command,u32 *register){
+    ;
 }
 
 /* SYSCALL 8
@@ -402,7 +402,7 @@ HIDDEN void Set_Tutor(){
  * Se la system call ha successo restituisce 0, altrimenti -1.
 */
 HIDDEN int Spec_Passup(int type, state_t *old, state_t *new){
-    
+    ;
 }
 
 

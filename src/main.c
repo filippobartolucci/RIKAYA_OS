@@ -31,13 +31,13 @@ u32 process_count = 0;
 state_t *sysbk_newarea = (state_t *)SYSBK_NEWAREA;
 state_t *program_trap_newarea = (state_t *)PGMTRAP_NEWAREA;
 state_t *interrupt_newarea = (state_t *)INT_NEWAREA;
-state_t *tblmgt_newarea = (state_t *)TLB_NEWAREA;
+state_t *tlbmgt_newarea = (state_t *)TLB_NEWAREA;
 
 /* Puntatori alle OLD AREA della ROM */
 state_t *sysbk_oldarea = (state_t *)SYSBK_OLDAREA;
 state_t *program_trap_oldarea = (state_t *)PGMTRAP_OLDAREA;
 state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
-state_t *tblmgt_oldarea = (state_t *)TLB_OLDAREA;
+state_t *tlbmgt_oldarea = (state_t *)TLB_OLDAREA;
 
 
 void setProcess(memaddr proc){
