@@ -4,6 +4,7 @@
 
 #include <umps/types.h>
 #include "listx.h"
+#include "const.h"
 
 typedef unsigned int memaddr;
 

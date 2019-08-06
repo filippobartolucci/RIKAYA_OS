@@ -47,13 +47,13 @@ void setProcess(memaddr proc){
 	tmp->p_s.pc_epc = proc;
 	tmp->p_s.reg_t9 = proc;
     /* Imposto la priorità */
-	tmp->priority = n;
-	tmp->original_priority = n;
+	tmp->priority = tmp->original_priority = n;
     /* Imposto lo STACK POINTER */
 	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * 1;
     /* Imposto lo STATUS del process */
-	tmp->p_s.status = 1<<2|0xFF00|1<<27;
-	
+	tmp->p_s.status = (1<<2|0xFF00|1<<27);
+    /* Setto il tempo */
+    tmp->p_wallclock_start = TOD_LO;
     /* Aumento il contatore dei processi */
 	process_count++;
     /* Inserisco il PCB nella lista dei processi in stato ready */

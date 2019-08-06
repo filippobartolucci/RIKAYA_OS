@@ -19,30 +19,36 @@ void scheduler(void) {
 	
     /* Se old != NULL */
 	if (old){
-        	/* Ripristino la sua priorità */
+        /* Ripristino la sua priorità */
 		restorePriority(old);
-        	/* Salvo lo stato dell'esecuzione prima dell'eccezione */
+        /* Salvo lo stato dell'esecuzione prima dell'eccezione */
 		memcpy(&old->p_s,interrupt_oldarea, sizeof(state_t));
-        	/* Reinserisco il processi nella ready_queue */
-		insertProcQ(&ready_queue,current_process);
+        
+        current->p_kernelt_total += TOD_LO - current->p_kernelt_start;
+        current->p_kernelt_start = 0;
+        
+        /* Reinserisco il processi nella ready_queue */
+        insertProcQ(&ready_queue,current_process);
  	}     
 	
     /* Estraggo il processo con priorità più alta dalla ready_queue */
 	current_process = headProcQ(&ready_queue);  
     
     /* Controllo se ci sono ancora processi da eseguire */
-    checkEmptyProc();
+    checkEmptyProcQ();
     
     /* Aumento la priorità dei processi che sono nella ready_queue */
     priorityAging();
     /* Imposto il PLT */
     setTIMER(TIMESLICE * TIME_SCALE);
+    /* Aggiorno il tempo */
+    next->p_usert_start = TOD_LO;
     /* Carico lo stato del processo corrente */
     LDST(&current_process->p_s);
 }
 
 /* Funzione ausiliaria per verificare se il processo corrente è vuoto */
-HIDDEN inline void checkEmptyProc(void){
+HIDDEN inline void checkEmptyProcQ(void){
     if(current_process == NULL && process_count == 0)
         HALT();
 }

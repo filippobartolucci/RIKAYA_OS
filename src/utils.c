@@ -25,3 +25,11 @@ void memcpy(void *dest, void *src, u32 n) {
    for (int i=0; i<n; i++) 
        cdest[i] = csrc[i]; 
 } 
+
+u32 getTime(){
+    return TOD_LO;
+}
+
+u32 getMicroSeconds(){
+    return TOD_LO / TIME_SCALE;
+}

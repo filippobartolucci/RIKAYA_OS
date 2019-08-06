@@ -76,8 +76,8 @@ void sysbk_handler(void){
             PANIC();
     }
     
-    old->reg_v0 = flag;
-    old->pc_epc += WORD_SIZE;
+    old_state->reg_v0 = flag;
+    old_state->pc_epc += WORD_SIZE;
 	
     scheduler();  
 }
@@ -376,7 +376,7 @@ HIDDEN void Wait_Clock(void){
  * indicato come puntatore nel secondo argomento.
  * Il valore restituito è il contenuto del registro di status del dispositivo
 */
-HIDDEN int Do_IO(u32 command,u32 *register){
+HIDDEN int Do_IO(u32 command,u32 *reg){
     ;
 }
 

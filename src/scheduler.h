@@ -16,7 +16,7 @@
 
 void scheduler();
 
-HIDDEN inline void checkEmptyProc(void);
+HIDDEN inline void checkEmptyProcQ(void);
 HIDDEN inline void priorityAging(void);
 HIDDEN inline void restorePriority(pcb_t *pcb);
 
