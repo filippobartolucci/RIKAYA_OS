@@ -26,7 +26,7 @@ void pgmtrp_handler(void);
 
 HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* wallclock);
 HIDDEN int createProcess(state_t* statep, int priority, void** cpid);
-HIDDEN void terminateProcess(void ** pid);
+HIDDEN int terminateProcess(void ** pid);
 HIDDEN void Verhogen(int* semaddr);
 HIDDEN void Passeren(int *semaddr);
 HIDDEN void Wait_Clock(void);
