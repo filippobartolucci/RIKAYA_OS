@@ -40,16 +40,15 @@ void sysbk_handler(void){
 	    	break;
 			
 		case TERMINATEPROCESS:
-            terminateProcess();
+            flag = terminateProcess((void **) arg1);
             break;
-			
 
 		case PASSEREN:
-      		Passeren();
+      		Passeren((int *) arg1);
       		break;
 
   	  	case VERHOGEN:
-    	 	Verhogen();
+    	 	Verhogen((int *) arg1);
       		break;
 		
 		case WAITCLOCK:
@@ -69,13 +68,16 @@ void sysbk_handler(void){
       		break;
 
     	case GETPID:
-      		Get_pid_ppid();
+      		Get_pid_ppid((void **) arg1, (void **) arg2);
       		break;
 
         default:
             /* Errore numero SYSCALL inesistente */
             PANIC();
     }
+    
+    old->reg_v0 = flag;
+    old->pc_epc += WORD_SIZE;
 	
     scheduler();  
 }
@@ -270,7 +272,7 @@ HIDDEN void terminateProcess(void ** pid){
     pcb_t *victim = NULL;
     
     /* Determino la vittima */
-    if (pid == NULL or pid == 0){
+    if (pid == NULL){
         victim = current_process;
     }else {
         victim = (pcb *)pid;
@@ -280,12 +282,10 @@ HIDDEN void terminateProcess(void ** pid){
     if (victim->p_parent == NULL)
         return -1;
     
+    // DA CONTROLLARE
     pcb_t *tut = current_process;
-    
-    
-    // DA CONTROLLARE 
     /* Se il processo vittima è diverso dal processo corrente */
-    if (pid!= NULL or pid !=0){
+    if (pid!= NULL){
         /* Controllo che la vittima sia un discendente del processo corrente */
         while ((tut = tut->p_parent)){
             if (tut == current_process)
@@ -295,7 +295,8 @@ HIDDEN void terminateProcess(void ** pid){
                 return -1;
         }
     }
- 
+    //------------------------------------------------------
+    
     /* Trovo un pcb che possa fare da tutore ai figli della vittima */
     tut = victim;
     while (tut->tutor != true)
@@ -323,7 +324,7 @@ HIDDEN void terminateProcess(void ** pid){
     freePcb(victim);
     
     
-    if (pid == NULL or pid == 0){
+    if (pid == NULL){
         /* Se il chiamante si è suicidato il controllo va allo scheduler */
         current_process = NULL;
         scheduler();

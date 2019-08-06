@@ -40,7 +40,7 @@ state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
 state_t *tblmgt_oldarea = (state_t *)TLB_OLDAREA;
 
 
-void setProcess(memaddr proc, int n){
+void setProcess(memaddr proc){
     /* Prendo un PCB dalla lista dei PCB liberi */
 	pcb_t *tmp = allocPcb();
     /* Imposto il PROGRAM COUNTER del processo */
@@ -50,9 +50,9 @@ void setProcess(memaddr proc, int n){
 	tmp->priority = n;
 	tmp->original_priority = n;
     /* Imposto lo STACK POINTER */
-	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * n;
+	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * 1;
     /* Imposto lo STATUS del process */
-	tmp->p_s.status = STATUS_P ;
+	tmp->p_s.status = 1<<2|0xFF00|1<<27;
 	
     /* Aumento il contatore dei processi */
 	process_count++;
@@ -72,7 +72,7 @@ int main(void){
 
     termprint("- Caricamento processi di test\n", 0);
     
-    setProcess((u32*)test,1);
+    setProcess((u32*)test);
 
     termprint("- Avvio dello scheduler\n\n",0);
 	
