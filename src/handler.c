@@ -12,46 +12,66 @@
 /* Gestione SYSCALL/BREAKPOINT */
 void sysbk_handler(void){
 
+	/* Gestione del tempo dei processi */
+  	if (current_procecss->p_usert_start){
+		/* Solo per processi non nuovi */
+		current_process->p_usert_total += TOD_LO - current_process->p_usert_start;
+    	current_process->p_usert_start = 0;
+	}
+	current_process->p_kernelt_start = TOD_LO;
+	
     /* Stato dell'esecuzione prima dell'eccezione */
     state_t *old_state = sysbk_oldarea;
+	
+	/* Viene incrementato il valore del PC */
+	old_state->pc_epc += WORD_SIZE;
     
     /* Registro nel quale è salvata la SYSCALL chiamata */
     u32 syscall_number = old_state->reg_a0;
         
+	/* Causa dell'eccezione */
+	u32 *cause = old_area->cause;
+		
     /* Parametri della SYSCALL */ 
-     u32 *arg1 =  &old_state->reg_a1;
-     u32 *arg2 =  &old_state->reg_a2;
-     u32 *arg3 =  &old_state->reg_a3;
+    u32 *arg1 =  &old_state->reg_a1;
+    u32 *arg2 =  &old_state->reg_a2;
+    u32 *arg3 =  &old_state->reg_a3;
         
-    /* Gestione dei BREAKPOINT da implementare nella PHASE2 
-     * Ignorati per PHASE1.5                                
-    */
-
+    /* Controllo Breakpoint */
+	if (/*CONDIZIONE BREAKPOINT*/) {
+    	if (!cur_proc->spec_set[SPEC_TYPE_SYSBP])
+    		Terminate_Process(0);
+    	memcpy(old_area, cur_proc->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
+	    LDST(cur_proc->spec_narea[SPEC_TYPE_SYSBP]);
+  	}
+	
+	
+	/* SYSCALL */
     int flag = 0;
         
     switch (syscall_number){
         /* Eseguo la SYSCALL richiesta */
-	case GETCPUTIME:
-		getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
-	 	break;
+		case GETCPUTIME:
+			getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
+	 		break;
 			
-	case CREATEPROCESS:
-	   	flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
-	    	break;
+		case CREATEPROCESS:
+	  	 	flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
+	   	 	break;
 			
-	case TERMINATEPROCESS:
-            	flag = terminateProcess((void **) arg1);
-            	break;
+		case TERMINATEPROCESS:
+            flag = terminateProcess((void **) arg1);
+            break;
 
-	case PASSEREN:
+		case PASSEREN:
       		Passeren((int *) arg1);
       		break;
 
-  	case VERHOGEN:
+  		case VERHOGEN:
     	 	Verhogen((int *) arg1);
       		break;
 		
-	case WAITCLOCK:
+		case WAITCLOCK:
       		Wait_Clock();
  		    break;
 
@@ -76,11 +96,13 @@ void sysbk_handler(void){
             PANIC();
     }
     
+	/* Valore di ritorno della SYSCACLL */
     old_state->reg_v0 = flag;
-    old_state->pc_epc += WORD_SIZE;
 	
-
-	
+	/*Gestione del tempo dei processi */
+	current_process->p_kernelt_total += TOD_LO - current_process->p_kernelt_start;
+  	current_process->p_kernelt_start = 0;
+  	current_process->p_usert_start = TOD_LO;
 	
     scheduler();  
 }
