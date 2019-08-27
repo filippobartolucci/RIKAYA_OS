@@ -19,16 +19,16 @@ void scheduler(void) {
 	
     /* Se old != NULL */
 	if (old){
-        /* Ripristino la sua priorità */
+        	/* Ripristino la sua priorità */
 		restorePriority(old);
-        /* Salvo lo stato dell'esecuzione prima dell'eccezione */
+        	/* Salvo lo stato dell'esecuzione prima dell'eccezione */
 		memcpy(&old->p_s,interrupt_oldarea, sizeof(state_t));
         
-        current->p_kernelt_total += TOD_LO - current->p_kernelt_start;
-        current->p_kernelt_start = 0;
+        	current->p_kernelt_total += TOD_LO - current->p_kernelt_start;
+        	current->p_kernelt_start = 0;
         
-        /* Reinserisco il processi nella ready_queue */
-        insertProcQ(&ready_queue,current_process);
+        	/* Reinserisco il processi nella ready_queue */
+        	insertProcQ(&ready_queue,current_process);
  	}     
 	
     /* Estraggo il processo con priorità più alta dalla ready_queue */
