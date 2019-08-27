@@ -79,6 +79,9 @@ void sysbk_handler(void){
     old_state->reg_v0 = flag;
     old_state->pc_epc += WORD_SIZE;
 	
+
+	
+	
     scheduler();  
 }
 
