@@ -76,6 +76,9 @@ void sysbk_handler(void){
  		    break;
 
     	case WAITIO:
+		/* SYSCALL7 chiamata Do_IO nelle specifiche, ma
+		 * definita come WAITIO nel file const.h e test
+		*/
       		Do_IO();
       		break;
 
