@@ -14,9 +14,8 @@
 #define RAMTOP (RAMBASE + RAMSIZE)
 
 typedef unsigned int u32;
-#define true 1
-#define false 0
 typedef u32 bool;
+
 
 /* Maxi number of overall (eg, system, daemons, user) concurrent processes */
 #define MAXPROC 20
@@ -91,9 +90,12 @@ typedef u32 bool;
 
 /* Device Commands */
 #define DEV_ACK   1
+#define DEV_ST_READY 1
 
-#define DEV_S_READY   1
-
+/* Specific type state */
+#define SPEC_TYPE_SYSBP 0
+#define SPEC_TYPE_TLB   1
+#define SPEC_TYPE_TRAP  2
 
 /* System Call */
 #define GETCPUTIME 1
