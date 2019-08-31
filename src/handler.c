@@ -425,6 +425,7 @@ HIDDEN void Set_Tutor(){
     current_process->tutor = TRUE;
 }
 
+
 /* SYSCALL 9
  * Questa chiamata registra quale handler di livello superiore
  * debba essere attivato in caso di trap di Syscall/breakpoint
@@ -438,24 +439,15 @@ HIDDEN void Set_Tutor(){
  * Se la system call ha successo restituisce 0, altrimenti -1.
 */
 HIDDEN int Spec_Passup(int type, state_t *old, state_t *new){
-	old->status = current_process->p_s.status;
-	current_process->p_s.status = new->status;
+	memcpy(current_process->spec_oarea[type], old, sizeof(state_t));
+	memcpy(current_process->spec_narea[type], new, sizeof(state_t));
 
-	switch(type){
-		case 0:
-			sysbk_handler();
-			return 0;
-			break;
-		case 1:
-			tlb_handler();
-			return 0;
-			break;
-		case 2:
-			pgmtrp_handler();
-			return 0;
-			break;
+	if(current_process->spec_set[type]){
+		return -1;
 	}
-	return -1;
+
+	current_process->spec_set[type] = TRUE;
+	return 0;
 }
 
 
