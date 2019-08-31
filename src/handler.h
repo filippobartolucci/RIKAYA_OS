@@ -23,7 +23,8 @@ void tlb_handler(void);
 void pgmtrp_handler(void);
 
 /* Funzioni ausiliarie */
-HIDDEN int whichDevice(u32* bitmap);
+HIDDEN inline int whichLine(u32* bitmap);
+HIDDEN inline int whichDevice(u32* bitmap);
 
 /* SYSCALL */
 HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* wallclock);

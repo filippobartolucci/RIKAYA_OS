@@ -30,7 +30,7 @@ void sysbk_handler(void){
     u32 syscall_number = old_state->reg_a0;
 
 	  /* Causa dell'eccezione */
-	  u32 *cause = old_area->cause;
+	  u32 *cause = old_state->cause;
 
     /* Parametri della SYSCALL */
     u32 *arg1 =  &old_state->reg_a1;
@@ -45,10 +45,8 @@ void sysbk_handler(void){
 	    LDST(current_process->spec_narea[SPEC_TYPE_SYSBP]);
   	}
 
-
 	  /* SYSCALL */
     int flag = 0;
-
     switch (syscall_number){
         /* Eseguo la SYSCALL richiesta */
 		      case GETCPUTIME:
@@ -99,7 +97,7 @@ void sysbk_handler(void){
             PANIC();
     }
 
-	  /* Valore di ritorno della SYSCACLL */
+	  /* Valore di ritorno della SYSCALL */
     old_state->reg_v0 = flag;
 
 	  /*Gestione del tempo dei processi */
@@ -126,7 +124,7 @@ void int_handler(void){
 	  termreg_t *term;
 
     /* Cerco il dispositivo che ha sollevato l'interrupt */
-    u32 line;
+    u32 line = whichLine(cause);
 
     /* I bit da 8 a 15 indicano quale linea interrupt sia attiva
      * Utilizziamo uno shift per eliminare i bit meno significativi che non ci servono
@@ -185,15 +183,17 @@ void int_handler(void){
 
     else /* Terminal */ ;
 
+    /*
     if (current_process)
         LDST(&old_state);
     else scheduler();
-
+    */
+    LDST(&old_state)
 }
 
 
 /* Funzione per trovare quale dispositivo ha causato l'interrupt */
-HIDDEN int whichDevice(u32* bitmap) {
+HIDDEN inline int whichDevice(u32* bitmap) {
   int dev_n = 0;
   while (*bitmap > 1) {
     dev_n++;
@@ -201,11 +201,31 @@ HIDDEN int whichDevice(u32* bitmap) {
   }
   return dev_n;
 }
+HIDDEN inline int whichLine(u32* bitmap){
+    /* I bit da 8 a 15 indicano quale linea interrupt sia attiva
+     * Utilizziamo uno shift per eliminare i bit meno significativi che non ci servono
+    */
+    cause = cause >> 8;
+
+    /* Ricerca dell' interrupt
+     * Controlli fatti in ordine di priorità.
+     * I bit meno significativi hanno priorità
+     * maggiore. Il controllo confronta
+     * la causa dell'interrupt con una causa in
+     * cui il bit del dispositivo che si sta controllando è a 1.
+    */
+    u32 line = 0;
+    u32 mask = 0x1;
+    while (cause != mask) {
+      line++;
+      mask << 1;
+    }
+
+    return line;
+}
 
 
-
-
-/*FINE INTERRUPT*/ 
+/*FINE INTERRUPT*/
 
 
 /* Gestione TLB */
@@ -233,12 +253,12 @@ void pgmtrp_handler(void){
 */
 HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* wallclock){
 	/* Assegno il pcb corrente ad un pcb interno alla funzione e
-	 * aggiorno il tempo prima di restituire il valore 
+	 * aggiorno il tempo prima di restituire il valore
 	*/
 	pcb_t* pcb = outProcQ(&ready_queue, current_process);
 	pcb->kernel_time += TOD_LO -pcb->kernel_time_start;
 	pcb->kernel_time_start = TOD_LO;
-	
+
 	if(user)
 		*user = pcb->user_time;
 
@@ -251,21 +271,21 @@ HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* w
 
 /* SYSCALL2
  * Quando invocata crea un processo figlio del chiamante.
- * I valori di PC e $SP sono dentro *statep 
- * cpid contiene l'ID del processo figlio 
+ * I valori di PC e $SP sono dentro *statep
+ * cpid contiene l'ID del processo figlio
  */
 HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
 	pcb_t* child = allocPcb();
-	
+
 	if(cpid)
 		*((pcb_t **)cpid) = child;
-	
+
 	if(!child)
 		return -1;
-	
+
 	/* Setto i valori delllo stato */
 	memcpy(&child->p_s, statep, sizeof(state_t));
-	
+
 	/* Setto i valori delle priorità */
 	child->original_priority = child->priority = priority;
 
@@ -275,7 +295,7 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
 	/* Inserisco il processo come figlio del chiamante */
 	insertChild(current_process, child);
 	insertProcQ(&ready_queue, child);
-	
+
 	return 0;
 }
 
@@ -287,27 +307,26 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
  * figli vengono adottati dal primo antenato che sia marcato come tutor.
  * Restituiscce 0 se ha successo e -1 in caso di errore
 */
-HIDDEN void terminateProcess(void ** pid){
+*/
+HIDDEN int terminateProcess(void ** pid){
     /* PCB da terminare */
     pcb_t *victim = NULL;
-    
+
     /* Determino la vittima */
-    if (pid == NULL || pid == 0){
+    if (pid == NULL){
         victim = current_process;
     }else {
         victim = (pcb_t *)pid;
     }
-    
+
     /* Controllo se la vittima è il processo root */
     if (victim->p_parent == NULL)
         return -1;
-    
+
+    // DA CONTROLLARE
     pcb_t *tut = current_process;
-    
-    
-    // DA CONTROLLARE 
     /* Se il processo vittima è diverso dal processo corrente */
-    if (pid!= NULL || pid !=0){
+    if (pid!= NULL){
         /* Controllo che la vittima sia un discendente del processo corrente */
         while ((tut = tut->p_parent)){
             if (tut == current_process)
@@ -317,41 +336,32 @@ HIDDEN void terminateProcess(void ** pid){
                 return -1;
         }
     }
- 
+    //------------------------------------------------------
+
     /* Trovo un pcb che possa fare da tutore ai figli della vittima */
     tut = victim;
-    while (tut->tutor != TRUE)
+    while (tut->tutor != true)
         tut = tut->p_parent;
-    
+
     /* Assegno tutti i figli della vittima al pcb tutore */
     pcb_t *child = NULL;
     while ((child = removeChild(victim))!= NULL)
         insertChild(tut, child);
-    
+
+    /* Rilascio dell'eventuale semaforo della vittima*/
+    if (victim->p_semKey){
+        (*victim->p_semKey)++;
+        /* Rimuovo la vittima dalla coda del semaforo */
+        outBlocked(victim);
+    }
+
     /* Rimuovo la vittima dalla lista dei figli del padre */
     outChild(victim);
     /* Rimuovo la vittima dalla ready_queue */
     outProcQ(&ready_queue, victim);
-    
-    //------------------------------------------------------------
-    /* Rilascio dell'eventuale semaforo della vittima
-    if (victim->p_semKey)
-        (*victim->p_semKey)++; */
-    //------------------------------------------------------------
-     
-    /* Rimuovo la vittima dalla coda del semaforo */
-    outBlocked(victim);
     /* Restituisco il pcb alla lista libera */
     freePcb(victim);
-    
-    
-    if (pid == NULL || pid == 0){
-        /* Se il chiamante si è suicidato il controllo va allo scheduler */
-        current_process = NULL;
-        scheduler();
-    }
-    
-    /* Controllo ritorna al chiamante */
+
     return 0;
 }
 
@@ -367,7 +377,7 @@ HIDDEN void Verhogen(int* semaddr){
 		blocked = removeBlocked(semaddr);
 		blocked->priority = blocked->original_priority;
 	}
-	
+
 	if(blocked)
 		insertProcQ(&ready_queue, blocked);
 }
@@ -401,7 +411,7 @@ HIDDEN void Passeren(int *semaddr){
  * al prossimo tick del clock di sistema
 */
 HIDDEN void Wait_Clock(void){
-    
+
 }
 
 /* SYSCALL 7
@@ -439,12 +449,12 @@ HIDDEN void Set_Tutor(){
  * Se la system call ha successo restituisce 0, altrimenti -1.
 */
 HIDDEN int Spec_Passup(int type, state_t *old, state_t *new){
-	memcpy(current_process->spec_oarea[type], old, sizeof(state_t));
-	memcpy(current_process->spec_narea[type], new, sizeof(state_t));
-
-	if(current_process->spec_set[type]){
+  if(current_process->spec_set[type]){
 		return -1;
 	}
+
+  memcpy(current_process->spec_oarea[type], old, sizeof(state_t));
+	memcpy(current_process->spec_narea[type], new, sizeof(state_t));
 
 	current_process->spec_set[type] = TRUE;
 	return 0;
@@ -459,4 +469,5 @@ HIDDEN int Spec_Passup(int type, state_t *old, state_t *new){
 HIDDEN void Get_pid_ppid(void ** pid, void ** ppid){
     if (pid)  *pid = current_process;
     if (ppid) *ppid = current_process->p_parent;
+
 }
