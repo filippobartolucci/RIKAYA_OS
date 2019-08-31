@@ -38,7 +38,7 @@ void sysbk_handler(void){
     u32 *arg3 =  &old_state->reg_a3;
         
     /* Controllo Breakpoint */
-	if (/*CONDIZIONE BREAKPOINT*/) {
+	if (syscall_number == 9) {
     	if (!cur_proc->spec_set[SPEC_TYPE_SYSBP])
     		Terminate_Process(0);
     	memcpy(old_area, cur_proc->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
