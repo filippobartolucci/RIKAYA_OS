@@ -24,7 +24,8 @@ typedef struct pcb_t {
 	/* process priority */
 	int			priority;
 	int 		original_priority;
-	bool tutor;
+    
+    	int tutor;
 
 	/* key of the semaphore on which the process is eventually blocked */
 	int			*p_semkey;
@@ -35,6 +36,11 @@ typedef struct pcb_t {
 	unsigned int 		kernel_time_start;
 	unsigned int 		kernel_time;
 	unsigned int		total_time;
+
+	/* Trap vectors */
+	state_t *spec_oarea[3];
+	state_t *spec_narea[3];
+	bool spec_set[3];
 } pcb_t;
 
 
@@ -50,7 +56,7 @@ typedef struct semd_t {
 	struct list_head	s_procQ;
 } semd_t;
 
-#define DEV_PER_INT 8
+
 typedef struct semdev {
     semd_t disk[DEV_PER_INT];
     semd_t tape[DEV_PER_INT];
