@@ -13,12 +13,12 @@
 void sysbk_handler(void){
 
 	  /* Gestione del tempo dei processi */
-    if (current_process->p_usert_start){
+    if (current_process->user_time_start){
 		    /* Solo per processi non nuovi */
-		    current_process->p_usert_total += TOD_LO - current_process->p_usert_start;
-    	  current_process->p_usert_start = 0;
+		    current_process->user_time += TOD_LO - current_process->user_time_start;
+    	  current_process->user_time_start = 0;
 	  }
-	  current_process->p_kernelt_start = TOD_LO;
+	  current_process->kernel_time_start = TOD_LO;
 
     /* Stato dell'esecuzione prima dell'eccezione */
     state_t *old_state = sysbk_oldarea;
@@ -40,8 +40,8 @@ void sysbk_handler(void){
     /* Controllo Breakpoint */
 	  if (syscall_number == 9) {
     	if (!current_process->spec_set[SPEC_TYPE_SYSBP])
-    		Terminate_Process(0);
-    	memcpy(old_area, current_process->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
+    		terminateProcess(0);
+    	memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
 	    LDST(current_process->spec_narea[SPEC_TYPE_SYSBP]);
   	}
 
@@ -194,19 +194,18 @@ void int_handler(void){
 
 /* Funzione per trovare quale dispositivo ha causato l'interrupt */
 HIDDEN int whichDevice(u32* bitmap) {
-    int dev_n = 0;
-    while (*bitmap > 1) {
-        dev_n++;
-        *bitmap >>= 1;
-    }
-    return dev_n;
+  int dev_n = 0;
+  while (*bitmap > 1) {
+    dev_n++;
+    *bitmap >>= 1;
+  }
+  return dev_n;
 }
 
 
 
-/*FINE INTERRUPT*/
 
-
+/*FINE INTERRUPT*/ 
 
 
 /* Gestione TLB */
@@ -222,12 +221,6 @@ void pgmtrp_handler(void){
 }
 
 
-
-
-
-
-
-
 /* SYSTEMCALL */
 /* HIDDEN perché accessibili solo da sysbk_handler */
 
@@ -240,12 +233,12 @@ void pgmtrp_handler(void){
 */
 HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* wallclock){
 	/* Assegno il pcb corrente ad un pcb interno alla funzione e
-	 * aggiorno il tempo prima di restituire il valore
+	 * aggiorno il tempo prima di restituire il valore 
 	*/
 	pcb_t* pcb = outProcQ(&ready_queue, current_process);
 	pcb->kernel_time += TOD_LO -pcb->kernel_time_start;
 	pcb->kernel_time_start = TOD_LO;
-
+	
 	if(user)
 		*user = pcb->user_time;
 
@@ -258,21 +251,21 @@ HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* w
 
 /* SYSCALL2
  * Quando invocata crea un processo figlio del chiamante.
- * I valori di PC e $SP sono dentro *statep
- * cpid contiene l'ID del processo figlio
+ * I valori di PC e $SP sono dentro *statep 
+ * cpid contiene l'ID del processo figlio 
  */
 HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
 	pcb_t* child = allocPcb();
-
+	
 	if(cpid)
 		*((pcb_t **)cpid) = child;
-
+	
 	if(!child)
 		return -1;
-
+	
 	/* Setto i valori delllo stato */
 	memcpy(&child->p_s, statep, sizeof(state_t));
-
+	
 	/* Setto i valori delle priorità */
 	child->original_priority = child->priority = priority;
 
@@ -282,7 +275,7 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
 	/* Inserisco il processo come figlio del chiamante */
 	insertChild(current_process, child);
 	insertProcQ(&ready_queue, child);
-
+	
 	return 0;
 }
 
@@ -294,25 +287,27 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
  * figli vengono adottati dal primo antenato che sia marcato come tutor.
  * Restituiscce 0 se ha successo e -1 in caso di errore
 */
-HIDDEN int terminateProcess(void ** pid){
+HIDDEN void terminateProcess(void ** pid){
     /* PCB da terminare */
     pcb_t *victim = NULL;
-
+    
     /* Determino la vittima */
-    if (pid == NULL){
+    if (pid == NULL || pid == 0){
         victim = current_process;
     }else {
         victim = (pcb_t *)pid;
     }
-
+    
     /* Controllo se la vittima è il processo root */
     if (victim->p_parent == NULL)
         return -1;
-
-    // DA CONTROLLARE
+    
     pcb_t *tut = current_process;
+    
+    
+    // DA CONTROLLARE 
     /* Se il processo vittima è diverso dal processo corrente */
-    if (pid!= NULL){
+    if (pid!= NULL || pid !=0){
         /* Controllo che la vittima sia un discendente del processo corrente */
         while ((tut = tut->p_parent)){
             if (tut == current_process)
@@ -322,41 +317,40 @@ HIDDEN int terminateProcess(void ** pid){
                 return -1;
         }
     }
-    //------------------------------------------------------
-
+ 
     /* Trovo un pcb che possa fare da tutore ai figli della vittima */
     tut = victim;
-    while (tut->tutor != true)
+    while (tut->tutor != TRUE)
         tut = tut->p_parent;
-
+    
     /* Assegno tutti i figli della vittima al pcb tutore */
     pcb_t *child = NULL;
     while ((child = removeChild(victim))!= NULL)
         insertChild(tut, child);
-
-    /* Rilascio dell'eventuale semaforo della vittima*/
-    if (victim->p_semKey){
-        (*victim->p_semKey)++;
-        /* Rimuovo la vittima dalla coda del semaforo */
-        outBlocked(victim);
-    }
-
+    
     /* Rimuovo la vittima dalla lista dei figli del padre */
     outChild(victim);
     /* Rimuovo la vittima dalla ready_queue */
     outProcQ(&ready_queue, victim);
-
+    
+    //------------------------------------------------------------
+    /* Rilascio dell'eventuale semaforo della vittima
+    if (victim->p_semKey)
+        (*victim->p_semKey)++; */
+    //------------------------------------------------------------
+     
+    /* Rimuovo la vittima dalla coda del semaforo */
+    outBlocked(victim);
     /* Restituisco il pcb alla lista libera */
     freePcb(victim);
-
-    /*
-    if (pid == NULL){
-        // Se il chiamante si è suicidato il controllo va allo scheduler
+    
+    
+    if (pid == NULL || pid == 0){
+        /* Se il chiamante si è suicidato il controllo va allo scheduler */
         current_process = NULL;
         scheduler();
     }
-    */
-
+    
     /* Controllo ritorna al chiamante */
     return 0;
 }
@@ -366,15 +360,16 @@ HIDDEN int terminateProcess(void ** pid){
  * Il valore del semaforo è memorizzato nella variabile passata come parametro
  */
 HIDDEN void Verhogen(int* semaddr){
-    *semaddr++;
-	  pcb_t* blocked;
-	  if(*semaddr <= 0){
-		    blocked = removeBlocked(semaddr);
-		    blocked->priority = blocked->original_priority;
-	  }
-
-	  if(blocked)
-		    insertProcQ(&ready_queue, blocked);
+	termprint("sono nella verhogen\n", 0);
+	*semaddr+=1;
+	pcb_t* blocked;
+	if(*semaddr <= 0){
+		blocked = removeBlocked(semaddr);
+		blocked->priority = blocked->original_priority;
+	}
+	
+	if(blocked)
+		insertProcQ(&ready_queue, blocked);
 }
 
 
@@ -401,23 +396,24 @@ HIDDEN void Passeren(int *semaddr){
 
 }
 
-
 /* SYSCALL6
  * Sospende il processo che la invoca fino
  * al prossimo tick del clock di sistema
 */
 HIDDEN void Wait_Clock(void){
-    ;
+    
 }
 
 /* SYSCALL 7
  * Attiva un'operazione di I/O copiando nel parametro
  * command nel campo comando del registro del dispositivo
  * indicato come puntatore nel secondo argomento.
- * Il valore restituito è il contenuto del registro di status del dispositivo
+ * Il valore restituito è il contenuto del registro di status del dispositivo
 */
-HIDDEN int Do_IO(u32 command,u32 *reg){
-    ;
+HIDDEN int Do_IO(u32 command, u32* reg){
+	dtpreg_t *reg1 = (dtpreg_t *) reg;
+	reg1->command = command;
+	return (reg1->status);
 }
 
 /* SYSCALL 8
@@ -426,23 +422,40 @@ HIDDEN int Do_IO(u32 command,u32 *reg){
  * che dovessero trovarsi orfani
 */
 HIDDEN void Set_Tutor(){
-    current_process->tutor = true;
+    current_process->tutor = TRUE;
 }
 
 /* SYSCALL 9
  * Questa chiamata registra quale handler di livello superiore
  * debba essere attivato in caso di trap di Syscall/breakpoint
  * (type=0), TLB (type=1) o Program trap (type=2).
- * Il significato dei parametri old e new è lo stesso delle
+ * Il significato dei parametri old e new è lo stesso delle
  * aree old e new gestite dal codice della ROM:
  * quando avviene una trap da passare al gestore lo stato
  * del processo che ha causato la trap viene posto nell’area
- * old e viene caricato o stato presente nell’area new.
+ * old e viene caricato lo stato presente nell’area new.
  * La system call deve essere richiamata una sola volta per tipo.
  * Se la system call ha successo restituisce 0, altrimenti -1.
 */
 HIDDEN int Spec_Passup(int type, state_t *old, state_t *new){
-    ;
+	old->status = current_process->p_s.status;
+	current_process->p_s.status = new->status;
+
+	switch(type){
+		case 0:
+			sysbk_handler();
+			return 0;
+			break;
+		case 1:
+			tlb_handler();
+			return 0;
+			break;
+		case 2:
+			pgmtrp_handler();
+			return 0;
+			break;
+	}
+	return -1;
 }
 
 
