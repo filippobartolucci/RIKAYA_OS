@@ -6,37 +6,37 @@
  * 	 Componenti del gruppo:	   		*
  *	   - Filippo Bartolucci	   		*
  *	   - Francesco Cerio		     	*/
- 
+
 #include "listx.h"
 #include "scheduler.h"
 
 
 
 void scheduler(void) {
-	
+
     /* Ultimo processo in esecuzione */
     pcb_t *old = outProcQ(&ready_queue, current_process);
-	
+
     /* Se old != NULL */
-	if (old){
+	  if (old){
         	/* Ripristino la sua priorità */
-		restorePriority(old);
+		      restorePriority(old);
         	/* Salvo lo stato dell'esecuzione prima dell'eccezione */
-		memcpy(&old->p_s,interrupt_oldarea, sizeof(state_t));
-        
+		      memcpy(&old->p_s,interrupt_oldarea, sizeof(state_t));
+
         	current->p_kernelt_total += TOD_LO - current->p_kernelt_start;
         	current->p_kernelt_start = 0;
-        
+
         	/* Reinserisco il processi nella ready_queue */
         	insertProcQ(&ready_queue,current_process);
- 	}     
-	
+ 	  }
+
     /* Estraggo il processo con priorità più alta dalla ready_queue */
-	current_process = headProcQ(&ready_queue);  
-    
+	  current_process = headProcQ(&ready_queue);
+
     /* Controllo se ci sono ancora processi da eseguire */
     checkEmptyProcQ();
-    
+
     /* Aumento la priorità dei processi che sono nella ready_queue */
     priorityAging();
     /* Imposto il PLT */
@@ -59,11 +59,10 @@ HIDDEN inline void priorityAging(void) {
 	list_for_each(iter, &ready_queue){
 		pcb_t *tmp = container_of(iter, pcb_t, p_next);
 		if (tmp->priority < MAXPRIO) tmp->priority++;
-		}
+	}
 }
 
 /* Funzione che si occupa di ripristinare la priorità originale di un PCB */
 HIDDEN inline void restorePriority(pcb_t *pcb){
-	pcb->priority = pcb->original_priority; 	
+	pcb->priority = pcb->original_priority;
 }
-

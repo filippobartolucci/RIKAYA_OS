@@ -6,108 +6,110 @@
  * 	 Componenti del gruppo:	   		*
  *	   - Filippo Bartolucci	   		*
  *	   - Francesco Cerio		     	*/
- 
+
 #include "handler.h"
 
 /* Gestione SYSCALL/BREAKPOINT */
 void sysbk_handler(void){
 
-	/* Gestione del tempo dei processi */
-  	if (current_procecss->p_usert_start){
-		/* Solo per processi non nuovi */
-		current_process->p_usert_total += TOD_LO - current_process->p_usert_start;
-    	current_process->p_usert_start = 0;
-	}
-	current_process->p_kernelt_start = TOD_LO;
-	
+	  /* Gestione del tempo dei processi */
+    if (current_process->p_usert_start){
+		    /* Solo per processi non nuovi */
+		    current_process->p_usert_total += TOD_LO - current_process->p_usert_start;
+    	  current_process->p_usert_start = 0;
+	  }
+	  current_process->p_kernelt_start = TOD_LO;
+
     /* Stato dell'esecuzione prima dell'eccezione */
     state_t *old_state = sysbk_oldarea;
-	
-	/* Viene incrementato il valore del PC */
-	old_state->pc_epc += WORD_SIZE;
-    
+
+	  /* Viene incrementato il valore del PC */
+	  old_state->pc_epc += WORD_SIZE;
+
     /* Registro nel quale è salvata la SYSCALL chiamata */
     u32 syscall_number = old_state->reg_a0;
-        
-	/* Causa dell'eccezione */
-	u32 *cause = old_area->cause;
-		
-    /* Parametri della SYSCALL */ 
+
+	  /* Causa dell'eccezione */
+	  u32 *cause = old_area->cause;
+
+    /* Parametri della SYSCALL */
     u32 *arg1 =  &old_state->reg_a1;
     u32 *arg2 =  &old_state->reg_a2;
     u32 *arg3 =  &old_state->reg_a3;
-        
+
     /* Controllo Breakpoint */
-	if (syscall_number == 9) {
-    	if (!cur_proc->spec_set[SPEC_TYPE_SYSBP])
+	  if (syscall_number == 9) {
+    	if (!current_process->spec_set[SPEC_TYPE_SYSBP])
     		Terminate_Process(0);
-    	memcpy(old_area, cur_proc->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
-	    LDST(cur_proc->spec_narea[SPEC_TYPE_SYSBP]);
+    	memcpy(old_area, current_process->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
+	    LDST(current_process->spec_narea[SPEC_TYPE_SYSBP]);
   	}
-	
-	
-	/* SYSCALL */
+
+
+	  /* SYSCALL */
     int flag = 0;
-        
+
     switch (syscall_number){
         /* Eseguo la SYSCALL richiesta */
-		case GETCPUTIME:
-			getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
-	 		break;
-			
-		case CREATEPROCESS:
-	  	 	flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
-	   	 	break;
-			
-		case TERMINATEPROCESS:
-            flag = terminateProcess((void **) arg1);
-            break;
+		      case GETCPUTIME:
+			        getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
+	 		        break;
 
-		case PASSEREN:
-      		Passeren((int *) arg1);
-      		break;
+		      case CREATEPROCESS:
+	  	 	       flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
+	   	 	       break;
 
-  		case VERHOGEN:
-    	 	Verhogen((int *) arg1);
-      		break;
-		
-		case WAITCLOCK:
-      		Wait_Clock();
- 		    break;
+		      case TERMINATEPROCESS:
+              flag = terminateProcess((void **) arg1);
+              break;
 
-    	case WAITIO:
-		/* SYSCALL7 chiamata Do_IO nelle specifiche, ma
-		 * definita come WAITIO nel file const.h e test
-		*/
-      		Do_IO();
-      		break;
+		      case PASSEREN:
+      		    Passeren((int *) arg1);
+      		    break;
 
-    	case SETTUTOR:
-      		Set_Tutor();
-      		break;
+  		    case VERHOGEN:
+    	 	      Verhogen((int *) arg1);
+      		    break;
 
-    	case SPECPASSUP:
-     		flag = Spec_Passup();
-      		break;
+		      case WAITCLOCK:
+      		    Wait_Clock();
+ 		          break;
 
-    	case GETPID:
-      		Get_pid_ppid((void **) arg1, (void **) arg2);
-      		break;
+  /* SYSCALL7 chiamata Do_IO nelle specifiche, ma
+   * definita come WAITIO nel file const.h e test
+  */
+    	    case WAITIO:
+      		     Do_IO();
+      		     break;
 
-        default:
+    	    case SETTUTOR:
+      		     Set_Tutor();
+      		     break;
+
+    	    case SPECPASSUP:
+     		       flag = Spec_Passup();
+      		     break;
+
+    	    case GETPID:
+      		     Get_pid_ppid((void **) arg1, (void **) arg2);
+      		     break;
+
+          default:
             /* Errore numero SYSCALL inesistente */
             PANIC();
     }
-    
-	/* Valore di ritorno della SYSCACLL */
+
+	  /* Valore di ritorno della SYSCACLL */
     old_state->reg_v0 = flag;
-	
-	/*Gestione del tempo dei processi */
-	current_process->p_kernelt_total += TOD_LO - current_process->p_kernelt_start;
+
+	  /*Gestione del tempo dei processi */
+	  current_process->p_kernelt_total += TOD_LO - current_process->p_kernelt_start;
   	current_process->p_kernelt_start = 0;
   	current_process->p_usert_start = TOD_LO;
-	
-    scheduler();  
+
+    if (current_process)
+        LDST(&old_state);
+    else scheduler();
 }
 
 /* Gestione INTERRUPT */
@@ -117,95 +119,92 @@ void int_handler(void){
     state_t *old_state = interrupt_oldarea;
     /* Causa dell'interrupt */
     u32 cause = old_state->cause;
-   
-	/* Struttura per il dispositivo */
-    dtpreg_t *dev;	
-	/* Struttura per il terminale */
-	termreg_t *term;
-	
+
+	  /* Struttura per il dispositivo */
+    dtpreg_t *dev;
+	  /* Struttura per il terminale */
+	  termreg_t *term;
+
     /* Cerco il dispositivo che ha sollevato l'interrupt */
     u32 line;
-	
+
     /* I bit da 8 a 15 indicano quale linea interrupt sia attiva
      * Utilizziamo uno shift per eliminare i bit meno significativi che non ci servono
-    */  
-
+    */
     cause = cause >> 8;
-	
-    /* Ricerca dell' interrupt 
+
+    /* Ricerca dell' interrupt
      * Controlli fatti in ordine di priorità.
      * I bit meno significativi hanno priorità
-     * maggiore. Il controllo confronta 
-     * la causa dell'interrupt con una causa in 
+     * maggiore. Il controllo confronta
+     * la causa dell'interrupt con una causa in
      * cui il bit del dispositivo che si sta controllando è a 1.
     */
 
-    if (cause == (cause | 0x1))          /* 00000001 */	  
+    if (cause == (cause | 0x1))          /* 00000001 */
         line = 0;
         /* Inter-processor-interrupts */
-    
-    else if (cause == (cause | 0x2))     /* 00000010 */  
+
+    else if (cause == (cause | 0x2))     /* 00000010 */
 		/* Processor Local Timer */
         scheduler();
 
-    else if (cause == (cause | 0x4))     /* 00000100 */	
+    else if (cause == (cause | 0x4))     /* 00000100 */
         line = 2;
         /* Interval timer */
 
     else if (cause == (cause | 0x8))     /* 00001000 */
-		line = 3;
+		    line = 3;
         /* Disk */
 
-    else if (cause == (cause | 0x10))	 /* 00010000 */	
-		line = 4;
+    else if (cause == (cause | 0x10))	 /* 00010000 */
+		    line = 4;
         /* Tape */
-		
+
     else if (cause == (cause | 0x20))    /* 00100000 */
-		line = 5;
+		    line = 5;
         /* Network */
 
     else if (cause == (cause | 0x40)){   /* 01000000 */
-		/* Printer */
-		line = 6;
+		    /* Printer */
+		    line = 6;
         /* Cerco quale stampante ha causato l'interrupt */
-		int dev_num = whichDevice((u32*)INT_BITMAP_PRINTER);
-		
-		// Codice per i semafori e processi bloccati ai semafori
-		
-		/* Invio l'ACK alla stampante */
-		dev = (dtpreg_t *)DEV_REG_ADDR(line,dev_num);
-		dev->command = DEV_ACK; 
-		
-		/* Attendo che sia di nuovo ready */
-		while(dev->status != DEV_ST_READY);		
-	}
-    
-    
-    else /* Terminal */ ;  
+
+        int dev_num = whichDevice((u32*)INT_BITMAP_PRINTER);
+
+		    // Codice per i semafori e processi bloccati ai semafori
+
+		    /* Invio l'ACK alla stampante */
+		    dev = (dtpreg_t *)DEV_REG_ADDR(line,dev_num);
+		    dev->command = DEV_ACK;
+
+		    /* Attendo che sia di nuovo ready */
+		    while(dev->status != DEV_ST_READY);
+	  }
+
+
+    else /* Terminal */ ;
 
     if (current_process)
         LDST(&old_state);
     else scheduler();
-    
+
 }
 
 
 /* Funzione per trovare quale dispositivo ha causato l'interrupt */
 HIDDEN int whichDevice(u32* bitmap) {
-  int dev_n = 0;
-  while (*bitmap > 1) {
-    dev_n++;
-    *bitmap >>= 1;
-  }
-  return dev_n;
+    int dev_n = 0;
+    while (*bitmap > 1) {
+        dev_n++;
+        *bitmap >>= 1;
+    }
+    return dev_n;
 }
 
 
 
-
-
-
-/*FINE INTERRUPT*/ 
+/*FINE INTERRUPT*/
 
 
 
@@ -241,12 +240,12 @@ void pgmtrp_handler(void){
 */
 HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* wallclock){
 	/* Assegno il pcb corrente ad un pcb interno alla funzione e
-	 * aggiorno il tempo prima di restituire il valore 
+	 * aggiorno il tempo prima di restituire il valore
 	*/
 	pcb_t* pcb = outProcQ(&ready_queue, current_process);
 	pcb->kernel_time += TOD_LO -pcb->kernel_time_start;
 	pcb->kernel_time_start = TOD_LO;
-	
+
 	if(user)
 		*user = pcb->user_time;
 
@@ -259,21 +258,21 @@ HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* w
 
 /* SYSCALL2
  * Quando invocata crea un processo figlio del chiamante.
- * I valori di PC e $SP sono dentro *statep 
- * cpid contiene l'ID del processo figlio 
+ * I valori di PC e $SP sono dentro *statep
+ * cpid contiene l'ID del processo figlio
  */
 HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
 	pcb_t* child = allocPcb();
-	
+
 	if(cpid)
 		*((pcb_t **)cpid) = child;
-	
+
 	if(!child)
 		return -1;
 
 	/* Setto i valori delllo stato */
 	memcpy(&child->p_s, statep, sizeof(state_t));
-	
+
 	/* Setto i valori delle priorità */
 	child->original_priority = child->priority = priority;
 
@@ -283,7 +282,7 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
 	/* Inserisco il processo come figlio del chiamante */
 	insertChild(current_process, child);
 	insertProcQ(&ready_queue, child);
-	
+
 	return 0;
 }
 
@@ -298,18 +297,18 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
 HIDDEN int terminateProcess(void ** pid){
     /* PCB da terminare */
     pcb_t *victim = NULL;
-    
+
     /* Determino la vittima */
     if (pid == NULL){
         victim = current_process;
     }else {
         victim = (pcb_t *)pid;
     }
-    
+
     /* Controllo se la vittima è il processo root */
     if (victim->p_parent == NULL)
         return -1;
-    
+
     // DA CONTROLLARE
     pcb_t *tut = current_process;
     /* Se il processo vittima è diverso dal processo corrente */
@@ -324,40 +323,40 @@ HIDDEN int terminateProcess(void ** pid){
         }
     }
     //------------------------------------------------------
-    
+
     /* Trovo un pcb che possa fare da tutore ai figli della vittima */
     tut = victim;
     while (tut->tutor != true)
         tut = tut->p_parent;
-    
+
     /* Assegno tutti i figli della vittima al pcb tutore */
     pcb_t *child = NULL;
     while ((child = removeChild(victim))!= NULL)
         insertChild(tut, child);
-    
+
+    /* Rilascio dell'eventuale semaforo della vittima*/
+    if (victim->p_semKey){
+        (*victim->p_semKey)++;
+        /* Rimuovo la vittima dalla coda del semaforo */
+        outBlocked(victim);
+    }
+
     /* Rimuovo la vittima dalla lista dei figli del padre */
     outChild(victim);
     /* Rimuovo la vittima dalla ready_queue */
     outProcQ(&ready_queue, victim);
-    
-    //------------------------------------------------------------
-    /* Rilascio dell'eventuale semaforo della vittima
-    if (victim->p_semKey)
-        (*victim->p_semKey)++;
-    //------------------------------------------------------------
-     
-    /* Rimuovo la vittima dalla coda del semaforo */
-    outBlocked(victim);
+
     /* Restituisco il pcb alla lista libera */
     freePcb(victim);
-    
-    
+
+    /*
     if (pid == NULL){
-        /* Se il chiamante si è suicidato il controllo va allo scheduler */
+        // Se il chiamante si è suicidato il controllo va allo scheduler
         current_process = NULL;
         scheduler();
     }
-    
+    */
+
     /* Controllo ritorna al chiamante */
     return 0;
 }
@@ -367,15 +366,15 @@ HIDDEN int terminateProcess(void ** pid){
  * Il valore del semaforo è memorizzato nella variabile passata come parametro
  */
 HIDDEN void Verhogen(int* semaddr){
-	*semaddr+=1;
-	pcb_t* blocked;
-	if(*semaddr <= 0){
-		blocked = removeBlocked(semaddr);
-		blocked->priority = blocked->original_priority;
-	}
-	
-	if(blocked)
-		insertProcQ(&ready_queue, blocked);
+    *semaddr++;
+	  pcb_t* blocked;
+	  if(*semaddr <= 0){
+		    blocked = removeBlocked(semaddr);
+		    blocked->priority = blocked->original_priority;
+	  }
+
+	  if(blocked)
+		    insertProcQ(&ready_queue, blocked);
 }
 
 
@@ -386,7 +385,20 @@ HIDDEN void Verhogen(int* semaddr){
  * L'indirizzo della variabile agisce da identificatore per il semaforo
 */
 HIDDEN void Passeren(int *semaddr){
-    ;
+    *semaddr--;
+    if (*semaddr<0){
+        /* Rimuovo il processo dalla ready_queue */
+        outProcQ(&ready_queue,current_process);
+        /* Aggiungo il processo alla coda del semaforo */
+        insertBlocked(semaddr,current_process);
+        /* Copio lo stato di esecuzione del processo */
+        memcpy(old_state, &current_process->p_s, sizeof(state_t));
+        /* Faccio avanzare il PC */
+        current_process->p_s.pc_epc += WORD_SIZE;
+
+        current_process == NULL;
+    }
+
 }
 
 
