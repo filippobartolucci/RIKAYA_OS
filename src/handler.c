@@ -201,7 +201,7 @@ HIDDEN inline int whichDevice(u32* bitmap) {
   }
   return dev_n;
 }
-HIDDEN inline int whichLine(u32* bitmap){
+HIDDEN inline int whichLine(u32* cause){
     /* I bit da 8 a 15 indicano quale linea interrupt sia attiva
      * Utilizziamo uno shift per eliminare i bit meno significativi che non ci servono
     */
