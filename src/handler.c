@@ -12,25 +12,26 @@
 /* Gestione SYSCALL/BREAKPOINT */
 void sysbk_handler(void){
 
-	  /* Gestione del tempo dei processi */
-    if (current_process->user_time_start){
-		    /* Solo per processi non nuovi */
-		    current_process->user_time += TOD_LO - current_process->user_time_start;
-    	  current_process->user_time_start = 0;
-	  }
-	  current_process->kernel_time_start = TOD_LO;
+	/* Gestione del tempo dei processi */
+	if (current_process->user_time_start){
+	    /* Solo per processi non nuovi */
+	    current_process->user_time += TOD_LO - current_process->user_time_start;
+	    current_process->user_time_start = 0;
+	}
+
+    current_process->kernel_time_start = TOD_LO;
 
     /* Stato dell'esecuzione prima dell'eccezione */
     state_t *old_state = sysbk_oldarea;
 
-	  /* Viene incrementato il valore del PC */
-	  old_state->pc_epc += WORD_SIZE;
+    /* Viene incrementato il valore del PC */
+    old_state->pc_epc += WORD_SIZE;
 
     /* Registro nel quale è salvata la SYSCALL chiamata */
     u32 syscall_number = old_state->reg_a0;
 
-	  /* Causa dell'eccezione */
-	  u32 *cause = old_state->cause;
+    /* Causa dell'eccezione */
+    u32 *cause = old_state->cause;
 
     /* Parametri della SYSCALL */
     u32 *arg1 =  &old_state->reg_a1;
@@ -38,28 +39,26 @@ void sysbk_handler(void){
     u32 *arg3 =  &old_state->reg_a3;
 
     /* Controllo Breakpoint */
-	  if (syscall_number == 9) {
-    	if (!current_process->spec_set[SPEC_TYPE_SYSBP])
-    		terminateProcess(0);
-    	memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
+    if (syscall_number == 9) {
+	    if (!current_process->spec_set[SPEC_TYPE_SYSBP])
+		    terminateProcess(0);
+	    memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
 	    LDST(current_process->spec_narea[SPEC_TYPE_SYSBP]);
-  	}
+    }
 
-	  /* SYSCALL */
+    /* SYSCALL */
     int flag = 0;
     switch (syscall_number){
         /* Eseguo la SYSCALL richiesta */
-		      case GETCPUTIME:
-			        getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
-	 		        break;
-
-		      case CREATEPROCESS:
-	  	 	       flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
-	   	 	       break;
-
-		      case TERMINATEPROCESS:
-              flag = terminateProcess((void **) arg1);
-              break;
+	    case GETCPUTIME:
+		    getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
+		    break;
+	    case CREATEPROCESS:
+		    flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
+		    break;
+	    case TERMINATEPROCESS:
+		    flag = terminateProcess((void **) arg1);
+		    break;
 
 		      case PASSEREN:
       		    Passeren((int *) arg1);
@@ -146,42 +145,25 @@ void int_handler(void){
           /* Interval Timer */
           break;
 
-      case 3:
-          /* Disk */
-          /* Cerco quale disco ha causato l'interrupt */
-          int dev_num = whichDevice((u32*)INT_BITMAP_DISK);
-  		    // Codice per i semafori e processi bloccati ai semafori
-  		    /* Invio l'ACK alla stampante */
-  		    dev = (dtpreg_t *)DEV_REG_ADDR(line,dev_num);
-  		    dev->command = DEV_ACK;
-  		    /* Attendo che sia di nuovo ready */
-  		    while(dev->status != DEV_ST_READY);
-          break;
-
-      case 4:
-          /* Tape */
-          break;
-
-      case 5:
-          /* Network */
-          break;
-
-      case 6:
-          /* Printer */
-          /* Cerco quale stampante ha causato l'interrupt */
-          int dev_num = whichDevice((u32*)INT_BITMAP_PRINTER);
-  		    // Codice per i semafori e processi bloccati ai semafori
-  		    /* Invio l'ACK alla stampante */
-  		    dev = (dtpreg_t *)DEV_REG_ADDR(line,dev_num);
-  		    dev->command = DEV_ACK;
-  		    /* Attendo che sia di nuovo ready */
-  		    while(dev->status != DEV_ST_READY);
-          break;
-
       case 7:
-          /* Terminal */
-          break;
+	  /* Terminal */
+	  break;
 
+      default:
+	  /* Caso in cui sia un device qualsiasi
+	   * cerco quale ha sollevato l'interrupt */
+	  u32 int_device = whichConst(line);
+	  int dev_num = whichDevice(*int_device);
+	  
+	  /* Invio l'ACK al device */
+	  dev = (dtpreg_t*)DEV_REG_ADDR(line, dev_num);
+	  dev->command = DEV_ACK;
+
+	  /* Attendo che il device torni in stato ready */
+	 while(dev->status != DEV_ST_READY); 
+
+	 break;
+     
     }
     /*
     if (current_process)
@@ -191,6 +173,35 @@ void int_handler(void){
     current_process->p_usert_start = TOD_LO;
     LDST(&old_state)
 }
+
+
+HIDDEN u32 whichConst(u32 line){
+	u32 value = 0;
+	switch(line){
+		case 3:
+			value = INT_BITMAP_DISK;
+		break;
+		
+		case 4:
+			value = INT_BITMAP_TAPE;
+		break;
+
+		case 5:
+			value = INT_BITMAP_NET;
+		break;
+
+		case 6:
+			value = INT_BITMAP_PRINTER;
+		break;
+
+		case 7:
+			value = INT_BITMAP_TERMINAL;
+		break;
+	}
+
+	return value;
+}
+
 
 
 /* Funzione per trovare quale dispositivo ha causato l'interrupt */
