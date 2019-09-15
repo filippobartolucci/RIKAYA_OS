@@ -23,6 +23,7 @@ void tlb_handler(void);
 void pgmtrp_handler(void);
 
 /* Funzioni ausiliarie */
+HIDDEN u32 whichConst(u32 line);
 HIDDEN inline int whichLine(u32* bitmap);
 HIDDEN inline int whichDevice(u32* bitmap);
 
