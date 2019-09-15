@@ -73,9 +73,9 @@ void sysbk_handler(void){
       		    Wait_Clock();
  		          break;
 
-  /* SYSCALL7 chiamata Do_IO nelle specifiche, ma
-   * definita come WAITIO nel file const.h e test
-  */
+              /* SYSCALL7 chiamata Do_IO nelle specifiche, ma
+               * definita come WAITIO nel file const.h e test
+              */
     	    case WAITIO:
       		     Do_IO();
       		     break;
@@ -93,8 +93,12 @@ void sysbk_handler(void){
       		     break;
 
           default:
-            /* Errore numero SYSCALL inesistente */
-            PANIC();
+            /* Gestore livello superiore */
+            if (!current_process->spec_set[SPEC_TYPE_SYSBP])
+                Terminate_Process(0);
+            memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
+          	LDST(current_process->spec_narea[SPEC_TYPE_SYSBP]);
+
     }
 
 	  /* Valore di ritorno della SYSCALL */
@@ -105,6 +109,7 @@ void sysbk_handler(void){
   	current_process->p_kernelt_start = 0;
   	current_process->p_usert_start = TOD_LO;
 
+    /* Se c'è un processo viene caricato, altrimento ci pensa lo scheduler */
     if (current_process)
         LDST(&old_state);
     else scheduler();
@@ -126,68 +131,64 @@ void int_handler(void){
     /* Cerco il dispositivo che ha sollevato l'interrupt */
     u32 line = whichLine(cause);
 
-    /* I bit da 8 a 15 indicano quale linea interrupt sia attiva
-     * Utilizziamo uno shift per eliminare i bit meno significativi che non ci servono
-    */
-    cause = cause >> 8;
 
-    /* Ricerca dell' interrupt
-     * Controlli fatti in ordine di priorità.
-     * I bit meno significativi hanno priorità
-     * maggiore. Il controllo confronta
-     * la causa dell'interrupt con una causa in
-     * cui il bit del dispositivo che si sta controllando è a 1.
-    */
+    switch (line) {
+      case 0:
+          // ACK A IPI
+          break;
 
-    if (cause == (cause | 0x1))          /* 00000001 */
-        line = 0;
-        /* Inter-processor-interrupts */
+      case 1:
+          /* Processor Local Timer */
+          scheduler();
+          break;
 
-    else if (cause == (cause | 0x2))     /* 00000010 */
-		/* Processor Local Timer */
-        scheduler();
+      case 2:
+          /* Interval Timer */
+          break;
 
-    else if (cause == (cause | 0x4))     /* 00000100 */
-        line = 2;
-        /* Interval timer */
+      case 3:
+          /* Disk */
+          /* Cerco quale disco ha causato l'interrupt */
+          int dev_num = whichDevice((u32*)INT_BITMAP_DISK);
+  		    // Codice per i semafori e processi bloccati ai semafori
+  		    /* Invio l'ACK alla stampante */
+  		    dev = (dtpreg_t *)DEV_REG_ADDR(line,dev_num);
+  		    dev->command = DEV_ACK;
+  		    /* Attendo che sia di nuovo ready */
+  		    while(dev->status != DEV_ST_READY);
+          break;
 
-    else if (cause == (cause | 0x8))     /* 00001000 */
-		    line = 3;
-        /* Disk */
+      case 4:
+          /* Tape */
+          break;
 
-    else if (cause == (cause | 0x10))	 /* 00010000 */
-		    line = 4;
-        /* Tape */
+      case 5:
+          /* Network */
+          break;
 
-    else if (cause == (cause | 0x20))    /* 00100000 */
-		    line = 5;
-        /* Network */
+      case 6:
+          /* Printer */
+          /* Cerco quale stampante ha causato l'interrupt */
+          int dev_num = whichDevice((u32*)INT_BITMAP_PRINTER);
+  		    // Codice per i semafori e processi bloccati ai semafori
+  		    /* Invio l'ACK alla stampante */
+  		    dev = (dtpreg_t *)DEV_REG_ADDR(line,dev_num);
+  		    dev->command = DEV_ACK;
+  		    /* Attendo che sia di nuovo ready */
+  		    while(dev->status != DEV_ST_READY);
+          break;
 
-    else if (cause == (cause | 0x40)){   /* 01000000 */
-		    /* Printer */
-		    line = 6;
-        /* Cerco quale stampante ha causato l'interrupt */
+      case 7:
+          /* Terminal */
+          break;
 
-        int dev_num = whichDevice((u32*)INT_BITMAP_PRINTER);
-
-		    // Codice per i semafori e processi bloccati ai semafori
-
-		    /* Invio l'ACK alla stampante */
-		    dev = (dtpreg_t *)DEV_REG_ADDR(line,dev_num);
-		    dev->command = DEV_ACK;
-
-		    /* Attendo che sia di nuovo ready */
-		    while(dev->status != DEV_ST_READY);
-	  }
-
-
-    else /* Terminal */ ;
-
+    }
     /*
     if (current_process)
         LDST(&old_state);
     else scheduler();
     */
+    current_process->p_usert_start = TOD_LO;
     LDST(&old_state)
 }
 
@@ -251,6 +252,7 @@ void pgmtrp_handler(void){
  *  - Tempo usato dal processo come kernel (tempi di SYSCALL e INTERRUPT relativi al processo
  *  - Tempo totale trascorso dalla prima attivazione del processo
 */
+
 HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* wallclock){
 	/* Assegno il pcb corrente ad un pcb interno alla funzione e
 	 * aggiorno il tempo prima di restituire il valore
