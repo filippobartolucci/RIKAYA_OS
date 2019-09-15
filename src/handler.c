@@ -100,17 +100,18 @@ void sysbk_handler(void){
 
     }
 
-	  /* Valore di ritorno della SYSCALL */
-    old_state->reg_v0 = flag;
-
-	  /*Gestione del tempo dei processi */
-	  current_process->p_kernelt_total += TOD_LO - current_process->p_kernelt_start;
-  	current_process->p_kernelt_start = 0;
-  	current_process->p_usert_start = TOD_LO;
-
     /* Se c'è un processo viene caricato, altrimento ci pensa lo scheduler */
-    if (current_process)
-        LDST(&old_state);
+    if (current_process){
+        /* Valore di ritorno della SYSCALL */
+    	old_state->reg_v0 = flag;
+
+		/*Gestione del tempo dei processi */
+		current_process->p_kernelt_total += TOD_LO - current_process->p_kernelt_start;
+	  	current_process->p_kernelt_start = 0;
+  		current_process->p_usert_start = TOD_LO;
+		
+		LDST(&old_state);
+	}
     else scheduler();
 }
 
@@ -431,7 +432,7 @@ HIDDEN void Wait_Clock(void){
  * Attiva un'operazione di I/O copiando nel parametro
  * command nel campo comando del registro del dispositivo
  * indicato come puntatore nel secondo argomento.
- * Il valore restituito è il contenuto del registro di status del dispositivo
+ * Il valore restituito è il contenuto del registro di status del dispositivo
 */
 HIDDEN int Do_IO(u32 command, u32* reg){
 	dtpreg_t *reg1 = (dtpreg_t *) reg;
@@ -453,7 +454,7 @@ HIDDEN void Set_Tutor(){
  * Questa chiamata registra quale handler di livello superiore
  * debba essere attivato in caso di trap di Syscall/breakpoint
  * (type=0), TLB (type=1) o Program trap (type=2).
- * Il significato dei parametri old e new è lo stesso delle
+ * Il significato dei parametri old e new è lo stesso delle
  * aree old e new gestite dal codice della ROM:
  * quando avviene una trap da passare al gestore lo stato
  * del processo che ha causato la trap viene posto nell’area
