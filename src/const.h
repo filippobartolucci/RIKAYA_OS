@@ -9,7 +9,7 @@
 
 #define TOD_LO *((unsigned int *)0x1000001C)
 #define TIME_SCALE *((unsigned int *)0x10000024)
-#DEFINE PSEUDO_CLOCK_TICK 100
+#define PSEUDO_CLOCK_TICK 100
 #define RAMBASE *((unsigned int *)0x10000000)
 #define RAMSIZE *((unsigned int *)0x10000004)
 #define RAMTOP (RAMBASE + RAMSIZE)
@@ -92,6 +92,10 @@ typedef u32 bool;
 /* Device Commands */
 #define DEV_ACK   1
 #define DEV_ST_READY 1
+#define DEV_NOT_INSTALLED 0
+
+/* Terminal status */
+#define TERM_BUSY 3
 
 /* Specific type state */
 #define SPEC_TYPE_SYSBP 0
