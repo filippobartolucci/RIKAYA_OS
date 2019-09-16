@@ -139,7 +139,7 @@ void int_handler(void){
 
     switch (line) {
 		case 0:
-			*((memaddr*) 0x10000400) = 1;
+			*((u32*) 0x10000400) = 1;
 			break;
 
 		case 1:
@@ -151,7 +151,7 @@ void int_handler(void){
       case 2:
 			/* Interval Timer */
 			while(Verhogen(&waitc_sem));
-			setTIMER((unsigned int)PSEUDO_CLOCK_TICK);
+			*((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
 			break;
 
       case 7:

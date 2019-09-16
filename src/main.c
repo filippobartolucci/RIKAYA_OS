@@ -6,7 +6,7 @@
  * 	 Componenti del gruppo:	   		*
  *	   - Filippo Bartolucci	   		*
  *	   - Francesco Cerio		     	*/
- 
+
 #include "pcb.h"
 #include "const.h"
 #include "handler.h"
@@ -61,27 +61,28 @@ void setProcess(memaddr proc){
 }
 
 int main(void){
-    
+
     termprint("\nPKAYA_OS\n",0);
 
     /* Inizializzazione del sistema */
     termprint("- Inizializzazione newArea\n", 0);
     initAREA();
     termprint("- Inizializzazione dei PCB()\n", 0);
-    initPcbs(); 
+    initPcbs();
 
     termprint("- Caricamento processi di test\n", 0);
-    
+
     setProcess((u32*)test);
 
     termprint("- Avvio dello scheduler\n\n",0);
-	
+
+    /* Setto Interval Timer */
+    *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
     /* Passo il controllo allo scheduler */
     scheduler();
-    
+
     /* L'esecuzione non può mai arrivare qua */
     PANIC();
 
     return 0;
 }
-
