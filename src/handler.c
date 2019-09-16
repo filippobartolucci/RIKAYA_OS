@@ -26,6 +26,7 @@ void sysbk_handler(void){
 
     /* Viene incrementato il valore del PC */
     old_state->pc_epc += WORD_SIZE;
+	old_state->reg_t9 += WORD_SIZE;
 
     /* Registro nel quale è salvata la SYSCALL chiamata */
     u32 syscall_number = old_state->reg_a0;
@@ -59,39 +60,32 @@ void sysbk_handler(void){
 	    case TERMINATEPROCESS:
 		    flag = terminateProcess((void **) arg1);
 		    break;
-
-		      case PASSEREN:
-      		    Passeren((int *) arg1);
-      		    break;
-
-  		    case VERHOGEN:
-    	 	      Verhogen((int *) arg1);
-      		    break;
-
-		      case WAITCLOCK:
-      		    Wait_Clock();
- 		          break;
-
-              /* SYSCALL7 chiamata Do_IO nelle specifiche, ma
-               * definita come WAITIO nel file const.h e test
-              */
-    	    case WAITIO:
-      		     Do_IO();
-      		     break;
-
-    	    case SETTUTOR:
-      		     Set_Tutor();
-      		     break;
-
-    	    case SPECPASSUP:
-     		       flag = Spec_Passup();
-      		     break;
-
-    	    case GETPID:
-      		     Get_pid_ppid((void **) arg1, (void **) arg2);
-      		     break;
-
-          default:
+		case PASSEREN:
+      	    Passeren((int *) arg1);
+      	    break;
+		case VERHOGEN:
+			Verhogen((int *) arg1);
+			break;
+		case WAITCLOCK:
+			Wait_Clock();
+			break;
+        /* SYSCALL7 chiamata Do_IO nelle specifiche, ma
+         * definita come WAITIO nel file const.h e test
+        */
+		case WAITIO:
+			Do_IO();
+			break;
+		case SETTUTOR:
+			Set_Tutor();
+      		break;
+		case SPECPASSUP:
+			flag = Spec_Passup();
+			break;
+		case GETPID:
+			Get_pid_ppid((void **) arg1, (void **) arg2);
+			break;
+		
+		default:
             /* Gestore livello superiore */
             if (!current_process->spec_set[SPEC_TYPE_SYSBP])
                 Terminate_Process(0);
@@ -103,7 +97,7 @@ void sysbk_handler(void){
     /* Se c'è un processo viene caricato, altrimento ci pensa lo scheduler */
     if (current_process){
         /* Valore di ritorno della SYSCALL */
-    	old_state->reg_v0 = flag;
+		old_state->reg_v0 = flag;
 
 		/*Gestione del tempo dei processi */
 		current_process->p_kernelt_total += TOD_LO - current_process->p_kernelt_start;
@@ -137,58 +131,56 @@ void int_handler(void){
 
 
     switch (line) {
-      case 0:
-          *((memaddr*) 0x10000400) = 1;
-          break;
+		case 0:
+			*((memaddr*) 0x10000400) = 1;
+			break;
 
-      case 1:
-          /* Processor Local Timer */
-					setTIMER((unsigned int)-1);
-          scheduler();
-          break;
+		case 1:
+			/* Processor Local Timer */
+			setTIMER((unsigned int)-1);
+			scheduler();
+			break;
 
       case 2:
-          /* Interval Timer */
-          break;
+			/* Interval Timer */
+			break;
 
       case 7:
-	  		/* Terminal */
-				u32 int_device = whichConst(line);
-				int dev_num = whichDevice(*int_device);
-				term = (termreg_t *)DEV_REG_ADDR(line,dev_num);
-	  		break;
+			/* Terminal */
+			u32 int_device = whichConst(line);
+			int dev_num = whichDevice(*int_device);
+			term = (termreg_t *)DEV_REG_ADDR(line,dev_num);
+			break;
 
       default:
 	  		/* Caso in cui sia un device qualsiasi,
 	   	 	 * cerco quale ha sollevato l'interrupt
 				*/
-	  		u32 int_device = whichConst(line);
-	  		int dev_num = whichDevice(*int_device);
-				dev = (dtpreg_t*)DEV_REG_ADDR(line, dev_num);
+			u32 int_device = whichConst(line);
+			int dev_num = whichDevice(*int_device);
+			dev = (dtpreg_t*)DEV_REG_ADDR(line, dev_num);
 
-				/* Libero il processo bloccato sul semaforo */
-				if (semd_keys[line][dev_num]){
-						semd_keys[line][dev_num]++;
-						pcb_t *freed = removeBlocked(&semd_keys[line][dev_num]);
-						freed -> p_s.reg_v0 = dev -> status
-						freed -> priority = freed -> original_priority;
-						insertProcQ(&ready_queue,freed);
-				}
-
-				/*
-				/* Libero il processo bloccato sul semaforo
-				pcb_t *freed = verhogen(&semd_keys[line][dev_num]);
+			/* Libero il processo bloccato sul semaforo */
+			if (semd_keys[line][dev_num]){
+				semd_keys[line][dev_num]++;
+				pcb_t *freed = removeBlocked(&semd_keys[line][dev_num]);
 				freed -> p_s.reg_v0 = dev -> status
-				*/
+				freed -> priority = freed -> original_priority;
+				insertProcQ(&ready_queue,freed);
+			}
 
-	  		/* Invio l'ACK al device */
-	  		dev->command = DEV_ACK;
-	  		/* Attendo che il device torni in stato ready */
-	 			while(dev->status != DEV_ST_READY);
+			/*
+			/* Libero il processo bloccato sul semaforo
+			pcb_t *freed = verhogen(&semd_keys[line][dev_num]);
+			freed -> p_s.reg_v0 = dev -> status
+			*/
 
+			/* Invio l'ACK al device */
+			dev->command = DEV_ACK;
+			/* Attendo che il device torni in stato ready */
+			while(dev->status != DEV_ST_READY);
 
-
-				break;
+			break;
     }
 
     /*
@@ -232,12 +224,12 @@ HIDDEN u32 whichConst(u32 line){
 
 /* Funzione per trovare quale dispositivo ha causato l'interrupt */
 HIDDEN inline int whichDevice(u32* bitmap) {
-  int dev_n = 0;
-  while (*bitmap > 1) {
-    dev_n++;
-    *bitmap >>= 1;
-  }
-  return dev_n;
+	int dev_n = 0;
+	while (*bitmap > 1) {
+		dev_n++;
+		*bitmap >>= 1;
+	}
+	return dev_n;
 }
 HIDDEN inline int whichLine(u32* cause){
     /* I bit da 8 a 15 indicano quale linea interrupt sia attiva
@@ -268,8 +260,8 @@ HIDDEN inline int whichLine(u32* cause){
 
 /* Gestione TLB */
 void tlb_handler(void){
-    state_t* old = tlbmgt_oldarea;
-    old->pc_epc += WORD_SIZE;
+	state_t* old = tlbmgt_oldarea;
+	old->pc_epc += WORD_SIZE;
 }
 
 /* Gestione PGMTRP */
@@ -509,5 +501,4 @@ HIDDEN int Spec_Passup(int type, state_t *old, state_t *new){
 HIDDEN void Get_pid_ppid(void ** pid, void ** ppid){
     if (pid)  *pid = current_process;
     if (ppid) *ppid = current_process->p_parent;
-
 }
