@@ -24,11 +24,11 @@ void scheduler(void) {
         	/* Salvo lo stato dell'esecuzione prima dell'eccezione */
 		      memcpy(&old->p_s,interrupt_oldarea, sizeof(state_t));
 
-        	current->p_kernelt_total += TOD_LO - current->p_kernelt_start;
-        	current->p_kernelt_start = 0;
+        	old->p_kernelt_total += TOD_LO - current->p_kernelt_start;
+        	old->p_kernelt_start = 0;
 
         	/* Reinserisco il processi nella ready_queue */
-        	insertProcQ(&ready_queue,current_process);
+        	insertProcQ(&ready_queue,old);
  	  }
 
     /* Estraggo il processo con priorità più alta dalla ready_queue */

@@ -109,13 +109,17 @@ void sysbk_handler(void){
 		current_process->p_kernelt_total += TOD_LO - current_process->p_kernelt_start;
 	  	current_process->p_kernelt_start = 0;
   		current_process->p_usert_start = TOD_LO;
-		
+
 		LDST(&old_state);
 	}
     else scheduler();
 }
 
 /* Gestione INTERRUPT */
+
+int semd_keys[7][7];
+int waitc_sem;
+
 void int_handler(void){
 
     /* Stato dell'esecuzione prima dell'eccezione */
@@ -134,11 +138,12 @@ void int_handler(void){
 
     switch (line) {
       case 0:
-          // ACK A IPI
+          *((memaddr*) 0x10000400) = 1;
           break;
 
       case 1:
           /* Processor Local Timer */
+					setTIMER((unsigned int)-1);
           scheduler();
           break;
 
@@ -147,25 +152,45 @@ void int_handler(void){
           break;
 
       case 7:
-	  /* Terminal */
-	  break;
+	  		/* Terminal */
+				u32 int_device = whichConst(line);
+				int dev_num = whichDevice(*int_device);
+				term = (termreg_t *)DEV_REG_ADDR(line,dev_num);
+	  		break;
 
       default:
-	  /* Caso in cui sia un device qualsiasi
-	   * cerco quale ha sollevato l'interrupt */
-	  u32 int_device = whichConst(line);
-	  int dev_num = whichDevice(*int_device);
-	  
-	  /* Invio l'ACK al device */
-	  dev = (dtpreg_t*)DEV_REG_ADDR(line, dev_num);
-	  dev->command = DEV_ACK;
+	  		/* Caso in cui sia un device qualsiasi,
+	   	 	 * cerco quale ha sollevato l'interrupt
+				*/
+	  		u32 int_device = whichConst(line);
+	  		int dev_num = whichDevice(*int_device);
+				dev = (dtpreg_t*)DEV_REG_ADDR(line, dev_num);
 
-	  /* Attendo che il device torni in stato ready */
-	 while(dev->status != DEV_ST_READY); 
+				/* Libero il processo bloccato sul semaforo */
+				if (semd_keys[line][dev_num]){
+						semd_keys[line][dev_num]++;
+						pcb_t *freed = removeBlocked(&semd_keys[line][dev_num]);
+						freed -> p_s.reg_v0 = dev -> status
+						freed -> priority = freed -> original_priority;
+						insertProcQ(&ready_queue,freed);
+				}
 
-	 break;
-     
+				/*
+				/* Libero il processo bloccato sul semaforo
+				pcb_t *freed = verhogen(&semd_keys[line][dev_num]);
+				freed -> p_s.reg_v0 = dev -> status
+				*/
+
+	  		/* Invio l'ACK al device */
+	  		dev->command = DEV_ACK;
+	  		/* Attendo che il device torni in stato ready */
+	 			while(dev->status != DEV_ST_READY);
+
+
+
+				break;
     }
+
     /*
     if (current_process)
         LDST(&old_state);
@@ -182,7 +207,7 @@ HIDDEN u32 whichConst(u32 line){
 		case 3:
 			value = INT_BITMAP_DISK;
 		break;
-		
+
 		case 4:
 			value = INT_BITMAP_TAPE;
 		break;
@@ -309,7 +334,7 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
 	/* Inserisco il processo come figlio del chiamante */
 	insertChild(current_process, child);
 	insertProcQ(&ready_queue, child);
-
+	process_count++;
 	return 0;
 }
 
@@ -335,9 +360,9 @@ HIDDEN int terminateProcess(void ** pid){
 
     /* Controllo se la vittima è il processo root */
     if (victim->p_parent == NULL)
+				/* Terminazione processo root */
         return -1;
 
-    // DA CONTROLLARE
     pcb_t *tut = current_process;
     /* Se il processo vittima è diverso dal processo corrente */
     if (pid!= NULL){
@@ -350,7 +375,6 @@ HIDDEN int terminateProcess(void ** pid){
                 return -1;
         }
     }
-    //------------------------------------------------------
 
     /* Trovo un pcb che possa fare da tutore ai figli della vittima */
     tut = victim;
@@ -375,7 +399,7 @@ HIDDEN int terminateProcess(void ** pid){
     outProcQ(&ready_queue, victim);
     /* Restituisco il pcb alla lista libera */
     freePcb(victim);
-
+		process_count--;
     return 0;
 }
 
@@ -394,6 +418,8 @@ HIDDEN void Verhogen(int* semaddr){
 
 	if(blocked)
 		insertProcQ(&ready_queue, blocked);
+
+	return blocked;
 }
 
 
