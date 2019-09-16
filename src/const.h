@@ -1,14 +1,15 @@
 #ifndef _CONST_H
 #define _CONST_H
 
-/**************************************************************************** 
+/****************************************************************************
  *
  * This header file contains the global constant & macro definitions.
- * 
+ *
  ****************************************************************************/
 
 #define TOD_LO *((unsigned int *)0x1000001C)
 #define TIME_SCALE *((unsigned int *)0x10000024)
+#define INT_TIMER 0x10000020
 #define PSEUDO_CLOCK_TICK 100
 #define RAMBASE *((unsigned int *)0x10000000)
 #define RAMSIZE *((unsigned int *)0x10000004)
@@ -32,7 +33,7 @@ typedef u32 bool;
 #define OFF 	0
 #define EOS '\0'
 
-#define FRAME_SIZE 4096  
+#define FRAME_SIZE 4096
 #define WORD_SIZE 4
 
 /* Definitions for the status register */
@@ -74,11 +75,11 @@ typedef u32 bool;
 
 
 /* Interrupt lines used by the devices */
-#define INT_PLT 1    
-#define INT_IT  2 
+#define INT_PLT 1
+#define INT_IT  2
 #define INT_DISK 3
 #define INT_TAPE 4
-#define INT_UNUSED 5  
+#define INT_UNUSED 5
 #define INT_PRINTER 6
 #define INT_TERMINAL 7
 

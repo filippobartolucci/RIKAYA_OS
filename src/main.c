@@ -40,7 +40,7 @@ state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
 state_t *tlbmgt_oldarea = (state_t *)TLB_OLDAREA;
 
 
-void setProcess(memaddr proc){
+void setProcess(u32 *proc){
     /* Prendo un PCB dalla lista dei PCB liberi */
 	pcb_t *tmp = allocPcb();
     /* Imposto il PROGRAM COUNTER del processo */
@@ -61,28 +61,18 @@ void setProcess(memaddr proc){
 }
 
 int main(void){
-
-    termprint("\nPKAYA_OS\n",0);
-
     /* Inizializzazione del sistema */
-    termprint("- Inizializzazione newArea\n", 0);
     initAREA();
-    termprint("- Inizializzazione dei PCB()\n", 0);
     initPcbs();
-
-    termprint("- Caricamento processi di test\n", 0);
-
-    setProcess((u32*)test);
-
-    termprint("- Avvio dello scheduler\n\n",0);
-
+    initASL();
     /* Setto Interval Timer */
     *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
+
+    setProcess((u32*)test);
     /* Passo il controllo allo scheduler */
     scheduler();
 
-    /* L'esecuzione non può mai arrivare qua */
+    /* L'esecuzione non deve mai arrivare qui */
     PANIC();
-
     return 0;
 }

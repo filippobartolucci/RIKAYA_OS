@@ -122,12 +122,11 @@ void int_handler(void){
     /* Causa dell'interrupt */
     u32 cause = old_state->cause;
 
-	  /* Struttura per il dispositivo */
+	/* Struttura per il dispositivo */
     dtpreg_t *dev;
-	  /* Struttura per il terminale */
-	  termreg_t *term;
-
-	  pcb_t* freed;
+	/* Struttura per il terminale */
+	termreg_t *term;
+	pcb_t* freed;
 
     /* Cerco il dispositivo che ha sollevato l'interrupt */
     u32 line = whichLine(cause);
@@ -174,7 +173,6 @@ void int_handler(void){
 				}
 
 				term -> transm_command = DEV_ACK;
-
 				while(transm_st != DEV_ST_READY);
 			}
 
@@ -191,7 +189,6 @@ void int_handler(void){
 				}
 
 				term -> recv_command = DEV_ACK;
-
 				while(recv_st != DEV_ST_READY);
 			}
 
@@ -207,19 +204,8 @@ void int_handler(void){
 			dev = (dtpreg_t*)DEV_REG_ADDR(line, devnum);
 
 			/* Libero il processo bloccato sul semaforo */
-			if (semd_keys[line][devnum]){
-				semd_keys[line][devnum]++;
-				freed = removeBlocked(&semd_keys[line][devnum]);
-				freed -> p_s.reg_v0 = dev -> status;
-				freed -> priority = freed -> original_priority;
-				insertProcQ(&ready_queue, freed);
-			}
-
-			/*
-			* Libero il processo bloccato sul semaforo
 			pcb_t *freed = verhogen(&semd_keys[line][dev_num]);
 			freed -> p_s.reg_v0 = dev -> status
-			*/
 
 			/* Invio l'ACK al device */
 			dev->command = DEV_ACK;
@@ -229,11 +215,6 @@ void int_handler(void){
 			break;
     }
 
-    /*
-    if (current_process)
-        LDST(&old_state);
-    else scheduler();
-    */
     current_process->p_user_time_start = TOD_LO;
     LDST(&old_state);
 }
@@ -462,7 +443,7 @@ HIDDEN int terminateProcess(void ** pid){
 HIDDEN pcb_t* Verhogen(int* semaddr){
 	*semaddr+=1;
 	pcb_t* blocked;
-	if(*semaddr <= 0){
+	if (*semaddr <= 0){
 		blocked = removeBlocked(semaddr);
 		blocked->priority = blocked->original_priority;
 	}
