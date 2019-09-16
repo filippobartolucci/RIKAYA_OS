@@ -84,7 +84,7 @@ void sysbk_handler(void){
 		case GETPID:
 			Get_pid_ppid((void **) arg1, (void **) arg2);
 			break;
-		
+
 		default:
             /* Gestore livello superiore */
             if (!current_process->spec_set[SPEC_TYPE_SYSBP])
@@ -100,9 +100,10 @@ void sysbk_handler(void){
 		old_state->reg_v0 = flag;
 
 		/*Gestione del tempo dei processi */
-		current_process->p_kernelt_total += TOD_LO - current_process->p_kernelt_start;
-	  	current_process->p_kernelt_start = 0;
-  		current_process->p_usert_start = TOD_LO;
+		current_process->p_kernel_time += TOD_LO - current_process->p_kernel_time_start;
+		current_process->p_user_time_start = TOD_LO;
+		current_process->p_kernelt_time_start = 0;
+
 
 		LDST(&old_state);
 	}
@@ -155,23 +156,23 @@ void int_handler(void){
 
       case 7:
 			/* Terminal */
-			u32 int_device = whichConst(line);
-			int dev_num = whichDevice(*int_device);
-			term = (termreg_t *)DEV_REG_ADDR(line,dev_num);
+			u32 bitmap = whichConst(line);
+			int devnum = whichDevice(*bitmap);
+			term = (termreg_t *)DEV_REG_ADDR(line,devnum);
 			transm_st = (term->transm_status) & STATUS_MASK;
 			recv_st = (term->recv_status) & STATUS_MASK;
-			
+
 			/* Aggiorno lo stato di trasmissione */
 			if(transm_st != TERM_BUSY && transm_status != DEV_ST_READY && transm_status != DEV_NOT_INSTALLED){
 				/* Libero il processo bloccato sul semaforo */
-				if(semd_keys[7][dev_num]){
-					semd_keys[7][dev_num]++;
-					freed = removeBlocked(&semd_key[7][dev_num]);
+				if(semd_keys[7][devnum]){
+					semd_keys[7][devnum]++;
+					freed = removeBlocked(&semd_key[7][devnum]);
 					freed -> p_s.reg_v0 = term -> transm_st;
 					freed -> priority = freed -> original_priority;
 					insertProcQ(&ready_queue, freed);
 				}
-				
+
 				term -> transm_command = DEV_ACK;
 
 				while(transm_st != DEV_ST_READY);
@@ -181,14 +182,14 @@ void int_handler(void){
 			/* Aggiorno lo stato di ricezione */
 			if(recv_st != TERM_BUSY && recv_status != DEV_ST_READY && recv_status != DEV_NOT_INSTALLED){
 				/* Libero il processo bloccato sul semaforo */
-				if(semd_keys[8][dev_num]){
-					semd_keys[8][dev_num]++;
-					freed = removeBlocked(&semd_key[8][dev_num]);
+				if(semd_keys[8][devnum]){
+					semd_keys[8][devnum]++;
+					freed = removeBlocked(&semd_key[8][devnum]);
 					freed -> p_s.reg_v0 = term -> recv_st;
 					freed -> priority = freed -> original_priority;
 					insertProcQ(&ready_queue, freed);
 				}
-				
+
 				term -> recv_command = DEV_ACK;
 
 				while(recv_st != DEV_ST_READY);
@@ -201,14 +202,14 @@ void int_handler(void){
 	  		/* Caso in cui sia un device qualsiasi,
 	   	 	 * cerco quale ha sollevato l'interrupt
 			*/
-			u32 int_device = whichConst(line);
-			int dev_num = whichDevice(*int_device);
-			dev = (dtpreg_t*)DEV_REG_ADDR(line, dev_num);
+			u32 bitmap = whichConst(line);
+			int devnum = whichDevice(*bitmap);
+			dev = (dtpreg_t*)DEV_REG_ADDR(line, devnum);
 
 			/* Libero il processo bloccato sul semaforo */
-			if (semd_keys[line][dev_num]){
-				semd_keys[line][dev_num]++;
-				freed = removeBlocked(&semd_keys[line][dev_num]);
+			if (semd_keys[line][devnum]){
+				semd_keys[line][devnum]++;
+				freed = removeBlocked(&semd_keys[line][devnum]);
 				freed -> p_s.reg_v0 = dev -> status;
 				freed -> priority = freed -> original_priority;
 				insertProcQ(&ready_queue, freed);
@@ -233,8 +234,8 @@ void int_handler(void){
         LDST(&old_state);
     else scheduler();
     */
-    current_process->p_usert_start = TOD_LO;
-    LDST(&old_state)
+    current_process->p_user_time_start = TOD_LO;
+    LDST(&old_state);
 }
 
 
@@ -280,7 +281,7 @@ HIDDEN inline int whichLine(u32* cause){
     /* I bit da 8 a 15 indicano quale linea interrupt sia attiva
      * Utilizziamo uno shift per eliminare i bit meno significativi che non ci servono
     */
-    cause = cause >> 8;
+    *cause = *cause >> 8;
 
     /* Ricerca dell' interrupt
      * Controlli fatti in ordine di priorità.
@@ -291,7 +292,7 @@ HIDDEN inline int whichLine(u32* cause){
     */
     u32 line = 0;
     u32 mask = 0x1;
-    while (cause != mask) {
+    while (*cause != mask) {
       line++;
       mask << 1;
     }
@@ -415,7 +416,7 @@ HIDDEN int terminateProcess(void ** pid){
 
     /* Trovo un pcb che possa fare da tutore ai figli della vittima */
     tut = victim;
-    while (tut->tutor != true)
+    while (tut->tutor != TRUE)
         tut = tut->p_parent;
 
     /* Assegno tutti i figli della vittima al pcb tutore */
@@ -425,7 +426,7 @@ HIDDEN int terminateProcess(void ** pid){
 
     /* Rilascio dell'eventuale semaforo della vittima*/
     if (victim->p_semKey){
-        (*victim->p_semKey)++;
+        (*victim->p_semkey)++;
         /* Rimuovo la vittima dalla coda del semaforo */
         outBlocked(victim);
     }
@@ -455,7 +456,7 @@ HIDDEN pcb_t* Verhogen(int* semaddr){
 	if(blocked)
 		insertProcQ(&ready_queue, blocked);
 
-	return blocked
+	return blocked;
 
 }
 
@@ -474,7 +475,8 @@ HIDDEN void Passeren(int *semaddr){
         /* Aggiungo il processo alla coda del semaforo */
         insertBlocked(semaddr,current_process);
         /* Copio lo stato di esecuzione del processo */
-        memcpy(old_state, &current_process->p_s, sizeof(state_t));
+		state_t *old_state = interrupt_oldarea;
+		memcpy(old_state, &current_process->p_s, sizeof(state_t));
         /* Faccio avanzare il PC */
         current_process->p_s.pc_epc += WORD_SIZE;
 
