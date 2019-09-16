@@ -32,7 +32,7 @@ void scheduler(void) {
  	  }
 
     /* Estraggo il processo con priorità più alta dalla ready_queue */
-	  current_process = headProcQ(&ready_queue);
+	current_process = headProcQ(&ready_queue);
 
     /* Controllo se ci sono ancora processi da eseguire */
     checkEmptyProcQ();
@@ -42,7 +42,7 @@ void scheduler(void) {
     /* Imposto il PLT */
     setTIMER(TIMESLICE * TIME_SCALE);
     /* Aggiorno il tempo */
-    next->p_usert_start = TOD_LO;
+    next->p_user_time_start = TOD_LO;
     /* Carico lo stato del processo corrente */
     LDST(&current_process->p_s);
 }
