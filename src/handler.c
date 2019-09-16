@@ -52,39 +52,45 @@ void sysbk_handler(void){
     switch (syscall_number){
         /* Eseguo la SYSCALL richiesta */
 	    case GETCPUTIME:
-		    getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
+			getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
 		    break;
-	    case CREATEPROCESS:
+
+		case CREATEPROCESS:
 		    flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
 		    break;
-	    case TERMINATEPROCESS:
-		    flag = terminateProcess((void **) arg1);
-		    break;
+
+		case TERMINATEPROCESS:
+			flag = terminateProcess((void **) arg1);
+			break;
+
 		case PASSEREN:
-      	    Passeren((int *) arg1);
-      	    break;
+      		Passeren((int *) arg1);
+      		break;
+
 		case VERHOGEN:
 			Verhogen((int *) arg1);
 			break;
+
 		case WAITCLOCK:
 			Wait_Clock();
 			break;
-        /* SYSCALL7 chiamata Do_IO nelle specifiche, ma
-         * definita come WAITIO nel file const.h e test
-        */
+
 		case WAITIO:
 			Do_IO();
 			break;
+
 		case SETTUTOR:
 			Set_Tutor();
       		break;
+
 		case SPECPASSUP:
 			flag = Spec_Passup();
 			break;
+
 		case GETPID:
 			Get_pid_ppid((void **) arg1, (void **) arg2);
 			break;
-		
+
 		default:
             /* Gestore livello superiore */
             if (!current_process->spec_set[SPEC_TYPE_SYSBP])
@@ -352,8 +358,14 @@ HIDDEN int terminateProcess(void ** pid){
 
     /* Controllo se la vittima è il processo root */
     if (victim->p_parent == NULL)
-				/* Terminazione processo root */
-        return -1;
+		/* Terminazione processo root */
+		pcb_t *iter;
+		list_for_each_entry(iter,victim->p_child,p_next){
+			terminateProcess(iter);
+		}
+		outProcQ(&ready_queue, victim);
+		freePcb(victim);
+		return 0;
 
     pcb_t *tut = current_process;
     /* Se il processo vittima è diverso dal processo corrente */
@@ -391,7 +403,7 @@ HIDDEN int terminateProcess(void ** pid){
     outProcQ(&ready_queue, victim);
     /* Restituisco il pcb alla lista libera */
     freePcb(victim);
-		process_count--;
+	process_count--;
     return 0;
 }
 
@@ -402,7 +414,7 @@ HIDDEN int terminateProcess(void ** pid){
 HIDDEN void Verhogen(int* semaddr){
 	termprint("sono nella verhogen\n", 0);
 	*semaddr+=1;
-	pcb_t* blocked;
+	pcb_t* blocked = NULL;
 	if(*semaddr <= 0){
 		blocked = removeBlocked(semaddr);
 		blocked->priority = blocked->original_priority;
