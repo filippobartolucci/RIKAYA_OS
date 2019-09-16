@@ -52,45 +52,39 @@ void sysbk_handler(void){
     switch (syscall_number){
         /* Eseguo la SYSCALL richiesta */
 	    case GETCPUTIME:
-			getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
+		    getCpuTime((u32*) arg1,(u32*) arg2,(u32*) arg3);
 		    break;
-
-		case CREATEPROCESS:
+	    case CREATEPROCESS:
 		    flag = createProcess((state_t*)arg1, (int)old_state->reg_a2, (void **)arg3);
 		    break;
-
-		case TERMINATEPROCESS:
-			flag = terminateProcess((void **) arg1);
-			break;
-
+	    case TERMINATEPROCESS:
+		    flag = terminateProcess((void **) arg1);
+		    break;
 		case PASSEREN:
-      		Passeren((int *) arg1);
-      		break;
-
+      	    Passeren((int *) arg1);
+      	    break;
 		case VERHOGEN:
 			Verhogen((int *) arg1);
 			break;
-
 		case WAITCLOCK:
 			Wait_Clock();
 			break;
-
+        /* SYSCALL7 chiamata Do_IO nelle specifiche, ma
+         * definita come WAITIO nel file const.h e test
+        */
 		case WAITIO:
 			Do_IO();
 			break;
-
 		case SETTUTOR:
 			Set_Tutor();
       		break;
-
 		case SPECPASSUP:
 			flag = Spec_Passup();
 			break;
-
 		case GETPID:
 			Get_pid_ppid((void **) arg1, (void **) arg2);
 			break;
-
+		
 		default:
             /* Gestore livello superiore */
             if (!current_process->spec_set[SPEC_TYPE_SYSBP])
@@ -117,7 +111,7 @@ void sysbk_handler(void){
 
 /* Gestione INTERRUPT */
 
-int semd_keys[7][7];
+int semd_keys[8][7];
 int waitc_sem;
 
 void int_handler(void){
@@ -132,63 +126,106 @@ void int_handler(void){
 	  /* Struttura per il terminale */
 	  termreg_t *term;
 
+	  pcb_t* freed;
+
     /* Cerco il dispositivo che ha sollevato l'interrupt */
     u32 line = whichLine(cause);
 
+    /* Dichiaro due variabili per salvare lo stato dei terminali */
+    u32 transm_st = 0;
+    u32 recv_st = 0;
+
 
     switch (line) {
-	    case 0:
-		*((memaddr*) 0x10000400) = 1;
-		break;
+		case 0:
+			*((memaddr*) 0x10000400) = 1;
+			break;
 
-	    case 1:
-		/* Processor Local Timer */
-		setTIMER((unsigned int)-1);
-		scheduler();
-		break;
+		case 1:
+			/* Processor Local Timer */
+			setTIMER((unsigned int)-1);
+			scheduler();
+			break;
 
-	    case 2:
-		/* Interval Timer */
-		while(Verhogen(&waitc_sem));
-		setTIMER(PSEUDO_CLOCK_TICK);
-		break;
+      case 2:
+			/* Interval Timer */
+			while(Verhogen(&waitc_sem));
+			setTIMER((unsigned int)PSEUDO_CLOCK_TICK);
+			break;
 
-	    case 7:
-		/* Terminal */
-		u32 int_device = whichConst(line);
-		int dev_num = whichDevice(*int_device);
-		term = (termreg_t *)DEV_REG_ADDR(line,dev_num);
-		break;
+      case 7:
+			/* Terminal */
+			u32 int_device = whichConst(line);
+			int dev_num = whichDevice(*int_device);
+			term = (termreg_t *)DEV_REG_ADDR(line,dev_num);
+			transm_st = (term->transm_status) & STATUS_MASK;
+			recv_st = (term->recv_status) & STATUS_MASK;
+			
+			/* Aggiorno lo stato di trasmissione */
+			if(transm_st != TERM_BUSY && transm_status != DEV_ST_READY && transm_status != DEV_NOT_INSTALLED){
+				/* Libero il processo bloccato sul semaforo */
+				if(semd_keys[7][dev_num]){
+					semd_keys[7][dev_num]++;
+					freed = removeBlocked(&semd_key[7][dev_num]);
+					freed -> p_s.reg_v0 = term -> transm_st;
+					freed -> priority = freed -> original_priority;
+					insertProcQ(&ready_queue, freed);
+				}
+				
+				term -> transm_command = DEV_ACK;
 
-	    default:
-		/* Caso in cui sia un device qualsiasi,
-		 * cerco quale ha sollevato l'interrupt
+				while(transm_st != DEV_ST_READY);
+			}
+
+
+			/* Aggiorno lo stato di ricezione */
+			if(recv_st != TERM_BUSY && recv_status != DEV_ST_READY && recv_status != DEV_NOT_INSTALLED){
+				/* Libero il processo bloccato sul semaforo */
+				if(semd_keys[8][dev_num]){
+					semd_keys[8][dev_num]++;
+					freed = removeBlocked(&semd_key[8][dev_num]);
+					freed -> p_s.reg_v0 = term -> recv_st;
+					freed -> priority = freed -> original_priority;
+					insertProcQ(&ready_queue, freed);
+				}
+				
+				term -> recv_command = DEV_ACK;
+
+				while(recv_st != DEV_ST_READY);
+			}
+
+
+			break;
+
+      default:
+	  		/* Caso in cui sia un device qualsiasi,
+	   	 	 * cerco quale ha sollevato l'interrupt
 			*/
-		u32 int_device = whichConst(line);
-		int dev_num = whichDevice(*int_device);
-		dev = (dtpreg_t*)DEV_REG_ADDR(line, dev_num);
+			u32 int_device = whichConst(line);
+			int dev_num = whichDevice(*int_device);
+			dev = (dtpreg_t*)DEV_REG_ADDR(line, dev_num);
 
-		/* Libero il processo bloccato sul semaforo */
-		if (semd_keys[line][dev_num]){
-			semd_keys[line][dev_num]++;
-			pcb_t *freed = removeBlocked(&semd_keys[line][dev_num]);
+			/* Libero il processo bloccato sul semaforo */
+			if (semd_keys[line][dev_num]){
+				semd_keys[line][dev_num]++;
+				freed = removeBlocked(&semd_keys[line][dev_num]);
+				freed -> p_s.reg_v0 = dev -> status;
+				freed -> priority = freed -> original_priority;
+				insertProcQ(&ready_queue, freed);
+			}
+
+			/*
+			* Libero il processo bloccato sul semaforo
+			pcb_t *freed = verhogen(&semd_keys[line][dev_num]);
 			freed -> p_s.reg_v0 = dev -> status
-			freed -> priority = freed -> original_priority;
-			insertProcQ(&ready_queue,freed);
-		}
+			*/
 
-		/*
-		/* Libero il processo bloccato sul semaforo
-		pcb_t *freed = verhogen(&semd_keys[line][dev_num]);
-		freed -> p_s.reg_v0 = dev -> status
-		*/
+			/* Invio l'ACK al device */
+			dev->command = DEV_ACK;
+			/* Attendo che il device torni in stato ready */
+			while(dev->status != DEV_ST_READY);
 
-		/* Invio l'ACK al device */
-		dev->command = DEV_ACK;
-		/* Attendo che il device torni in stato ready */
-		while(dev->status != DEV_ST_READY);
-
-		break;
+			break;
     }
 
     /*
@@ -346,7 +383,7 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
  * figli vengono adottati dal primo antenato che sia marcato come tutor.
  * Restituiscce 0 se ha successo e -1 in caso di errore
 */
-*/
+
 HIDDEN int terminateProcess(void ** pid){
     /* PCB da terminare */
     pcb_t *victim = NULL;
@@ -359,16 +396,9 @@ HIDDEN int terminateProcess(void ** pid){
     }
 
     /* Controllo se la vittima è il processo root */
-    if (victim->p_parent == NULL){
-	/* Terminazione processo root */
-	pcb_t *iter;
-	list_for_each_entry(iter,victim->p_child,p_next){
-		terminateProcess(iter);
-	}
-	outProcQ(&ready_queue, victim);
-	freePcb(victim);
-	return 0;
-    }
+    if (victim->p_parent == NULL)
+				/* Terminazione processo root */
+        return -1;
 
     pcb_t *tut = current_process;
     /* Se il processo vittima è diverso dal processo corrente */
@@ -406,7 +436,7 @@ HIDDEN int terminateProcess(void ** pid){
     outProcQ(&ready_queue, victim);
     /* Restituisco il pcb alla lista libera */
     freePcb(victim);
-	process_count--;
+		process_count--;
     return 0;
 }
 
@@ -415,9 +445,8 @@ HIDDEN int terminateProcess(void ** pid){
  * Il valore del semaforo è memorizzato nella variabile passata come parametro
  */
 HIDDEN pcb_t* Verhogen(int* semaddr){
-	termprint("sono nella verhogen\n", 0);
 	*semaddr+=1;
-	pcb_t* blocked = NULL;
+	pcb_t* blocked;
 	if(*semaddr <= 0){
 		blocked = removeBlocked(semaddr);
 		blocked->priority = blocked->original_priority;
@@ -426,7 +455,8 @@ HIDDEN pcb_t* Verhogen(int* semaddr){
 	if(blocked)
 		insertProcQ(&ready_queue, blocked);
 
-	return blocked;
+	return blocked
+
 }
 
 
