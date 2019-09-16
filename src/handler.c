@@ -73,13 +73,13 @@ void sysbk_handler(void){
          * definita come WAITIO nel file const.h e test
         */
 		case WAITIO:
-			Do_IO();
+			Do_IO(u32 command, u32 *reg);
 			break;
 		case SETTUTOR:
 			Set_Tutor();
       		break;
 		case SPECPASSUP:
-			flag = Spec_Passup();
+			flag = Spec_Passup(int type, state_t *old, state_t *new);
 			break;
 		case GETPID:
 			Get_pid_ppid((void **) arg1, (void **) arg2);
@@ -265,9 +265,6 @@ HIDDEN u32 whichConst(u32 line){
 
 	return value;
 }
-
-
-
 /* Funzione per trovare quale dispositivo ha causato l'interrupt */
 HIDDEN inline int whichDevice(u32* bitmap) {
 	int dev_n = 0;
@@ -306,14 +303,31 @@ HIDDEN inline int whichLine(u32* cause){
 
 /* Gestione TLB */
 void tlb_handler(void){
-	state_t* old = tlbmgt_oldarea;
-	old->pc_epc += WORD_SIZE;
+	state_t* old_state = tlbmgt_oldarea;
+	old_state->pc_epc += WORD_SIZE;
+	old_state->reg_t9 += WORD_SIZE;
+
+	/* Se il processo non ha un handler viene terminato */
+	if (!cur_proc->spec_set[SPEC_TYPE_TLB])
+		Terminate_Process(NULL);
+
+	memcpy(old_area, current_process->spec_oarea[SPEC_TYPE_TLB], sizeof(state_t));
+	LDST(current_process->spec_narea[SPEC_TYPE_TLB]);
 }
 
 /* Gestione PGMTRP */
 void pgmtrp_handler(void){
-    state_t* old = program_trap_oldarea;
-    old->pc_epc += WORD_SIZE;
+    state_t* old_state = program_trap_oldarea;
+    old_state->pc_epc += WORD_SIZE;
+	old_state->reg_t9 += WORD_SIZE;
+
+	/* Se il processo non ha un handler viene terminato */
+	if (!cur_proc->spec_set[SPEC_TYPE_TRAP])
+		Terminate_Process(NULL);
+
+	memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_TRAP], sizeof(state_t));
+	/* L'handler che si occuperà della trap */
+	LDST(current_process->spec_oarea[SPEC_TYPE_TRAP]);
 }
 
 
