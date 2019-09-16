@@ -359,15 +359,16 @@ HIDDEN int terminateProcess(void ** pid){
     }
 
     /* Controllo se la vittima è il processo root */
-    if (victim->p_parent == NULL)
-		/* Terminazione processo root */
-		pcb_t *iter;
-		list_for_each_entry(iter,victim->p_child,p_next){
-			terminateProcess(iter);
-		}
-		outProcQ(&ready_queue, victim);
-		freePcb(victim);
-		return 0;
+    if (victim->p_parent == NULL){
+	/* Terminazione processo root */
+	pcb_t *iter;
+	list_for_each_entry(iter,victim->p_child,p_next){
+		terminateProcess(iter);
+	}
+	outProcQ(&ready_queue, victim);
+	freePcb(victim);
+	return 0;
+    }
 
     pcb_t *tut = current_process;
     /* Se il processo vittima è diverso dal processo corrente */
