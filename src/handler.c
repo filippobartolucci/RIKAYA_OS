@@ -137,56 +137,58 @@ void int_handler(void){
 
 
     switch (line) {
-		case 0:
-			*((memaddr*) 0x10000400) = 1;
-			break;
+	    case 0:
+		*((memaddr*) 0x10000400) = 1;
+		break;
 
-		case 1:
-			/* Processor Local Timer */
-			setTIMER((unsigned int)-1);
-			scheduler();
-			break;
+	    case 1:
+		/* Processor Local Timer */
+		setTIMER((unsigned int)-1);
+		scheduler();
+		break;
 
-      case 2:
-			/* Interval Timer */
-			break;
+	    case 2:
+		/* Interval Timer */
+		while(Verhogen(&waitc_sem));
+		setTIMER(PSEUDO_CLOCK_TICK);
+		break;
 
-      case 7:
-			/* Terminal */
-			u32 int_device = whichConst(line);
-			int dev_num = whichDevice(*int_device);
-			term = (termreg_t *)DEV_REG_ADDR(line,dev_num);
-			break;
+	    case 7:
+		/* Terminal */
+		u32 int_device = whichConst(line);
+		int dev_num = whichDevice(*int_device);
+		term = (termreg_t *)DEV_REG_ADDR(line,dev_num);
+		break;
 
-      default:
-	  		/* Caso in cui sia un device qualsiasi,
-	   	 	 * cerco quale ha sollevato l'interrupt
-				*/
-			u32 int_device = whichConst(line);
-			int dev_num = whichDevice(*int_device);
-			dev = (dtpreg_t*)DEV_REG_ADDR(line, dev_num);
-
-			/* Libero il processo bloccato sul semaforo */
-			if (semd_keys[line][dev_num]){
-				semd_keys[line][dev_num]++;
-				pcb_t *freed = removeBlocked(&semd_keys[line][dev_num]);
-				freed -> p_s.reg_v0 = dev -> status
-				freed -> priority = freed -> original_priority;
-				insertProcQ(&ready_queue,freed);
-			}
-
-			/*
-			/* Libero il processo bloccato sul semaforo
-			pcb_t *freed = verhogen(&semd_keys[line][dev_num]);
-			freed -> p_s.reg_v0 = dev -> status
+	    default:
+		/* Caso in cui sia un device qualsiasi,
+		 * cerco quale ha sollevato l'interrupt
 			*/
+		u32 int_device = whichConst(line);
+		int dev_num = whichDevice(*int_device);
+		dev = (dtpreg_t*)DEV_REG_ADDR(line, dev_num);
 
-			/* Invio l'ACK al device */
-			dev->command = DEV_ACK;
-			/* Attendo che il device torni in stato ready */
-			while(dev->status != DEV_ST_READY);
+		/* Libero il processo bloccato sul semaforo */
+		if (semd_keys[line][dev_num]){
+			semd_keys[line][dev_num]++;
+			pcb_t *freed = removeBlocked(&semd_keys[line][dev_num]);
+			freed -> p_s.reg_v0 = dev -> status
+			freed -> priority = freed -> original_priority;
+			insertProcQ(&ready_queue,freed);
+		}
 
-			break;
+		/*
+		/* Libero il processo bloccato sul semaforo
+		pcb_t *freed = verhogen(&semd_keys[line][dev_num]);
+		freed -> p_s.reg_v0 = dev -> status
+		*/
+
+		/* Invio l'ACK al device */
+		dev->command = DEV_ACK;
+		/* Attendo che il device torni in stato ready */
+		while(dev->status != DEV_ST_READY);
+
+		break;
     }
 
     /*
@@ -411,7 +413,7 @@ HIDDEN int terminateProcess(void ** pid){
  * Operazione di rilascio su un semaforo
  * Il valore del semaforo è memorizzato nella variabile passata come parametro
  */
-HIDDEN void Verhogen(int* semaddr){
+HIDDEN pcb_t* Verhogen(int* semaddr){
 	termprint("sono nella verhogen\n", 0);
 	*semaddr+=1;
 	pcb_t* blocked = NULL;

@@ -31,7 +31,7 @@ HIDDEN inline int whichDevice(u32* bitmap);
 HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* wallclock);
 HIDDEN int createProcess(state_t* statep, int priority, void** cpid);
 HIDDEN int terminateProcess(void ** pid);
-HIDDEN void Verhogen(int* semaddr);
+HIDDEN pcb_t* Verhogen(int* semaddr);
 HIDDEN void Passeren(int *semaddr);
 HIDDEN void Wait_Clock(void);
 HIDDEN int Do_IO(u32 command, u32 *reg);
