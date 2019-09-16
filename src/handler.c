@@ -451,7 +451,7 @@ HIDDEN void Passeren(int *semaddr){
  * al prossimo tick del clock di sistema
 */
 HIDDEN void Wait_Clock(void){
-
+	Passeren(*waitc_sem);
 }
 
 /* SYSCALL 7
