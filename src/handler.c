@@ -69,17 +69,14 @@ void sysbk_handler(void){
 		case WAITCLOCK:
 			Wait_Clock();
 			break;
-        /* SYSCALL7 chiamata Do_IO nelle specifiche, ma
-         * definita come WAITIO nel file const.h e test
-        */
 		case WAITIO:
-			Do_IO(u32 command, u32 *reg);
+			Do_IO(old_state->reg_a1, old_state->reg_a2);
 			break;
 		case SETTUTOR:
 			Set_Tutor();
       		break;
 		case SPECPASSUP:
-			flag = Spec_Passup(int type, state_t *old, state_t *new);
+			flag = Spec_Passup(old_state->reg_a1, old_state->reg_a2, old_state->reg_a3);
 			break;
 		case GETPID:
 			Get_pid_ppid((void **) arg1, (void **) arg2);
@@ -100,9 +97,9 @@ void sysbk_handler(void){
 		old_state->reg_v0 = flag;
 
 		/*Gestione del tempo dei processi */
-		current_process->p_kernel_time += TOD_LO - current_process->p_kernel_time_start;
-		current_process->p_user_time_start = TOD_LO;
-		current_process->p_kernelt_time_start = 0;
+		current_process->kernel_time += TOD_LO - current_process->p_kernel_time_start;
+		current_process->user_time_start = TOD_LO;
+		current_process->kernelt_time_start = 0;
 
 
 		LDST(&old_state);
@@ -129,7 +126,7 @@ void int_handler(void){
 	pcb_t* freed;
 
     /* Cerco il dispositivo che ha sollevato l'interrupt */
-    u32 line = whichLine(cause);
+    int line = whichLine(cause);
 
     /* Dichiaro due variabili per salvare lo stato dei terminali */
     u32 transm_st = 0;
