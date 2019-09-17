@@ -204,8 +204,13 @@ void int_handler(void){
 			dev = (dtpreg_t*)DEV_REG_ADDR(line, devnum);
 
 			/* Libero il processo bloccato sul semaforo */
-			pcb_t *freed = verhogen(&semd_keys[line][dev_num]);
-			freed -> p_s.reg_v0 = dev -> status
+			if(semd_keys[line][devnum]){
+				semd_keys[line][devnum]++;
+				freed = removeBlocked(&semd_key[line][devnum]);
+				freed -> p_s.reg_v0 = term -> recv_st;
+				freed -> priority = freed -> original_priority;
+				insertProcQ(&ready_queue, freed);
+			}
 
 			/* Invio l'ACK al device */
 			dev->command = DEV_ACK;
@@ -472,8 +477,6 @@ HIDDEN void Passeren(int *semaddr){
         /* Copio lo stato di esecuzione del processo */
 		state_t *old_state = interrupt_oldarea;
 		memcpy(old_state, &current_process->p_s, sizeof(state_t));
-        /* Faccio avanzare il PC */
-        current_process->p_s.pc_epc += WORD_SIZE;
 
         current_process == NULL;
     }
@@ -495,9 +498,27 @@ HIDDEN void Wait_Clock(void){
  * Il valore restituito è il contenuto del registro di status del dispositivo
 */
 HIDDEN int Do_IO(u32 command, u32* reg){
-	dtpreg_t *reg1 = (dtpreg_t *) reg;
-	reg1->command = command;
-	return (reg1->status);
+	dtpreg_t *devreg = (dtpreg_t *) reg;
+	termreg_t *termreg = (termreg_t*) reg;
+
+	int line,devn;
+	for(int i=3;i<8;i++){
+		for(int j=0;j<8;i++){
+			if (DEV_REG_ADDR(i,j) == (u32)devreg){
+				line = i;
+				devn = j;
+			}
+		}
+	}
+
+	if(line<7){
+		devreg->command = command;
+	}else{
+		if(1){
+			termreg->command = command;
+		}
+	}
+	Passeren(&semd_keys[line][devn]);
 }
 
 /* SYSCALL 8

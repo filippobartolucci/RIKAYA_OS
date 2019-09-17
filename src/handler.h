@@ -22,6 +22,8 @@ void int_handler(void);
 void tlb_handler(void);
 void pgmtrp_handler(void);
 
+int semd_keys[8][7];
+int waitc_sem;
 /* Funzioni ausiliarie */
 HIDDEN u32 whichConst(u32 line);
 HIDDEN inline int whichLine(u32* bitmap);
