@@ -18,6 +18,8 @@
 #include "utils.h"
 #include "asl.h"
 
+u32 debug = 0;
+
 /* Funzioni di test per PHASE2 */
 extern void test();
 
@@ -68,6 +70,7 @@ int main(void){
 
     setProcess();
     /* Passo il controllo allo scheduler */
+	debug++;
     scheduler();
 
     /* L'esecuzione non deve mai arrivare qui */
