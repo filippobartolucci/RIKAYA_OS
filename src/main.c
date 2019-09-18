@@ -23,7 +23,7 @@ extern void test();
 
 void system(){
 	state_t test_s;
-	
+
 	memset(&test_s, 0, sizeof(test_s));
 	test_s.pc_epc = (memaddr)test;
 	test_s.reg_sp = RAMTOP - FRAME_SIZE * 2;  /* First stack is for the system process */
@@ -31,7 +31,7 @@ void system(){
 	SYSCALL(SETTUTOR, 0, 0, 0);
 	SYSCALL(CREATEPROCESS, (u32)&test_s, 1, 0);
 
-	while(1); 
+	while(1);
 }
 
 /* Lista dei processi ready */
@@ -45,13 +45,13 @@ u32 process_count = 0;
 state_t *sysbk_newarea = (state_t *)SYSBK_NEWAREA;
 state_t *program_trap_newarea = (state_t *)PGMTRAP_NEWAREA;
 state_t *interrupt_newarea = (state_t *)INT_NEWAREA;
-state_t *tblmgt_newarea = (state_t *)TLB_NEWAREA;
+state_t *tlbmgt_newarea = (state_t *)TLB_NEWAREA;
 
 /* Puntatori alle OLD AREA della ROM */
 state_t *sysbk_oldarea = (state_t *)SYSBK_OLDAREA;
 state_t *program_trap_oldarea = (state_t *)PGMTRAP_OLDAREA;
 state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
-state_t *tblmgt_oldarea = (state_t *)TLB_OLDAREA;
+state_t *tlbmgt_oldarea = (state_t *)TLB_OLDAREA;
 
 
 void setProcess(u32 *proc){

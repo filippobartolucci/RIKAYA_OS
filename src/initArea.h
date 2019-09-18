@@ -6,7 +6,7 @@
  * 	 Componenti del gruppo:	   		*
  *	   - Filippo Bartolucci	   		*
  *	   - Francesco Cerio		     	*/
- 
+
 #ifndef _INITAREA_H
 #define _INITAREA_H
 
@@ -34,7 +34,7 @@ state_t *tblmgt_newarea;
 state_t *sysbk_oldarea;
 state_t *program_trap_oldarea;
 state_t *interrupt_oldarea;
-state_t *tblmgt_oldarea;
+state_t *tlbmgt_oldarea;
 
 HIDDEN inline void initSYSBK(u32 status);
 HIDDEN inline void initPGMTRP(u32 status);
@@ -45,5 +45,3 @@ void initAREA(void);
 void initNEWAREA(void);
 
 #endif
-
-
