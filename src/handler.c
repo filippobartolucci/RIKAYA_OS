@@ -8,6 +8,7 @@
  *	   - Francesco Cerio		     	*/
 
 #include "handler.h"
+#include "asl.h"
 
 /* Gestione SYSCALL/BREAKPOINT */
 void sysbk_handler(void){
@@ -85,7 +86,7 @@ void sysbk_handler(void){
 		default:
             /* Gestore livello superiore */
             if (!current_process->spec_set[SPEC_TYPE_SYSBP])
-                Terminate_Process(0);
+                terminateProcess(0);
             memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
           	LDST(current_process->spec_narea[SPEC_TYPE_SYSBP]);
 
@@ -128,6 +129,9 @@ void int_handler(void){
     /* Cerco il dispositivo che ha sollevato l'interrupt */
     int line = whichLine(cause);
 
+    unsigned int bitmap;
+    int devnum;
+
     /* Dichiaro due variabili per salvare lo stato dei terminali */
     u32 transm_st = 0;
     u32 recv_st = 0;
@@ -152,14 +156,14 @@ void int_handler(void){
 
       case 7:
 			/* Terminal */
-			unsigned int bitmap = whichConst(line);
-			int devnum = whichDevice(*bitmap);
-			term = (termreg_t *)DEV_REG_ADDR(line,devnum);
-			transm_st = (term->transm_status) & STATUS_MASK;
-			recv_st = (term->recv_status) & STATUS_MASK;
+			bitmap = whichConst(line);
+			devnum = whichDevice(&bitmap);
+			term = (termreg_t *)DEV_REG_ADDR(line, devnum);
+			transm_st = (term->transm_status) & STATUSMASK;
+			recv_st = (term->recv_status) & STATUSMASK;
 
 			/* Aggiorno lo stato di trasmissione */
-			if(transm_st != TERM_BUSY && transm_status != DEV_ST_READY && transm_status != DEV_NOT_INSTALLED){
+			if(transm_st != TERM_BUSY && transm_st != DEV_ST_READY && transm_st != DEV_NOT_INSTALLED){
 				/* Libero il processo bloccato sul semaforo */
 				if(semd_keys[7][devnum]){
 					semd_keys[7][devnum]++;
@@ -175,7 +179,7 @@ void int_handler(void){
 
 
 			/* Aggiorno lo stato di ricezione */
-			if(recv_st != TERM_BUSY && recv_status != DEV_ST_READY && recv_status != DEV_NOT_INSTALLED){
+			if(recv_st != TERM_BUSY && recv_st != DEV_ST_READY && recv_st != DEV_NOT_INSTALLED){
 				/* Libero il processo bloccato sul semaforo */
 				if(semd_keys[8][devnum]){
 					semd_keys[8][devnum]++;
@@ -196,14 +200,14 @@ void int_handler(void){
 	  		/* Caso in cui sia un device qualsiasi,
 	   	 	 * cerco quale ha sollevato l'interrupt
 			*/
-			unsigned int bitmap = whichConst(line);
-			int devnum = whichDevice(*bitmap);
+			bitmap = whichConst(line);
+			devnum = whichDevice(&bitmap);
 			dev = (dtpreg_t*)DEV_REG_ADDR(line, devnum);
 
 			/* Libero il processo bloccato sul semaforo */
 			if(semd_keys[line][devnum]){
 				semd_keys[line][devnum]++;
-				freed = removeBlocked(&semd_key[line][devnum]);
+				freed = removeBlocked(&semd_keys[line][devnum]);
 				freed -> p_s.reg_v0 = term -> recv_status;
 				freed -> priority = freed -> original_priority;
 				insertProcQ(&ready_queue, freed);
@@ -286,13 +290,13 @@ HIDDEN inline int whichLine(u32* cause){
 
 /* Gestione TLB */
 void tlb_handler(void){
-	state_t* old_state = tlbmgt_oldarea;
+	state_t* old_state = tblmgt_oldarea;
 	old_state->pc_epc += WORD_SIZE;
 	old_state->reg_t9 += WORD_SIZE;
 
 	/* Se il processo non ha un handler viene terminato */
 	if (!current_process->spec_set[SPEC_TYPE_TLB])
-		Terminate_Process(NULL);
+		terminateProcess(NULL);
 
 	memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_TLB], sizeof(state_t));
 	LDST(current_process->spec_narea[SPEC_TYPE_TLB]);
@@ -305,8 +309,8 @@ void pgmtrp_handler(void){
 	old_state->reg_t9 += WORD_SIZE;
 
 	/* Se il processo non ha un handler viene terminato */
-	if (!cur_proc->spec_set[SPEC_TYPE_TRAP])
-		Terminate_Process(NULL);
+	if (!current_process->spec_set[SPEC_TYPE_TRAP])
+		terminateProcess(NULL);
 
 	memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_TRAP], sizeof(state_t));
 	/* L'handler che si occuperà della trap */
@@ -465,6 +469,7 @@ HIDDEN pcb_t* Verhogen(int* semaddr){
  * L'indirizzo della variabile agisce da identificatore per il semaforo
 */
 HIDDEN void Passeren(int *semaddr){
+	print("passeren\n");
     *semaddr--;
     if (*semaddr<0){
         /* Rimuovo il processo dalla ready_queue */
@@ -512,7 +517,7 @@ HIDDEN int Do_IO(u32 command, u32* reg){
 		devreg->command = command;
 	}else{
 		if(1){
-			termreg->command = command;
+			termreg->recv_command = command;
 		}
 	}
 	Passeren(&semd_keys[line][devn]);
