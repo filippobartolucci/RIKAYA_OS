@@ -41,18 +41,17 @@ state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
 state_t *tlbmgt_oldarea = (state_t *)TLB_OLDAREA;
 
 
-void setProcess(u32 *proc){
+void setProcess(){
     /* Prendo un PCB dalla lista dei PCB liberi */
 	pcb_t *tmp = allocPcb();
     /* Imposto il PROGRAM COUNTER del processo */
-	tmp->p_s.pc_epc = proc;
-	tmp->p_s.reg_t9 = proc;
+	tmp->p_s.pc_epc = tmp->p_s.reg_t9 = (u32)test;
     /* Imposto la priorità */
 	tmp->priority = tmp->original_priority = 1;
     /* Imposto lo STACK POINTER */
 	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * 1;
     /* Imposto lo STATUS del process */
-	tmp->p_s.status = ST_PREV_INTERRUPTS | ST_LCL_TIMER | ST_IM_ALL;;
+	tmp->p_s.status = P_STATUS;
     /* Aumento il contatore dei processi */
 	process_count++;
     /* Inserisco il PCB nella lista dei processi in stato ready */
@@ -67,7 +66,7 @@ int main(void){
     /* Setto Interval Timer */
     *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
 
-    setProcess((u32*)test);
+    setProcess();
     /* Passo il controllo allo scheduler */
     scheduler();
 

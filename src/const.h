@@ -40,6 +40,7 @@ typedef u32 bool;
 #define STATUS_KUc 1 << 2
 #define STATUS_TE  1 << 27
 #define STATUS_CU  1 << 28
+#define P_STATUS 1<<2|1<<27 | 0xFF00
 
 /* Definisco una Macro per settare lo status all'interno delle New Area, operando con un OR bit a bit imposto:
  * - Lo stato del coprocessore ad 1

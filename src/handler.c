@@ -448,7 +448,7 @@ HIDDEN int terminateProcess(void ** pid){
  */
 HIDDEN pcb_t* Verhogen(int* semaddr){
 	*semaddr+=1;
-	pcb_t* blocked;
+	pcb_t* blocked=NULL;
 	if (*semaddr <= 0){
 		blocked = removeBlocked(semaddr);
 		blocked->priority = blocked->original_priority;
