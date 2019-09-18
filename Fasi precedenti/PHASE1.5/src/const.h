@@ -1,10 +1,10 @@
 #ifndef _CONST_H
 #define _CONST_H
 
-/**************************************************************************** 
+/****************************************************************************
  *
  * This header file contains the global constant & macro definitions.
- * 
+ *
  ****************************************************************************/
 
 #define TOD_LO *((unsigned int *)0x1000001C)
@@ -29,7 +29,7 @@ typedef unsigned int u32;
 #define OFF 	0
 #define EOS '\0'
 
-#define FRAME_SIZE 4096  
+#define FRAME_SIZE 4096
 #define WORD_SIZE 4
 
 /* Definitions for the status register */
@@ -50,7 +50,7 @@ typedef unsigned int u32;
  *  - Local Timer ON
  *  - La maschera degli Interrupt
  */
-#define STATUS_P (STATUS_KUc | STATUS_TE | (0xFF00 - 0x8000))
+#define STATUS_P (STATUS_KUc | STATUS_TE | (0xFF00 ))
 
 
 #define DEV_PER_INT 8 /* Maximum number of devices per interrupt line */
@@ -71,11 +71,11 @@ typedef unsigned int u32;
 
 
 /* Interrupt lines used by the devices */
-#define INT_PLT 1    
-#define INT_IT  2 
+#define INT_PLT 1
+#define INT_IT  2
 #define INT_DISK 3
 #define INT_TAPE 4
-#define INT_UNUSED 5  
+#define INT_UNUSED 5
 #define INT_PRINTER 6
 #define INT_TERMINAL 7
 

@@ -18,6 +18,7 @@
 #include "utils.h"
 #include "asl.h"
 
+/* Traced Region */
 u32 debug = 0;
 
 /* Funzioni di test per PHASE2 */
