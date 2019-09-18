@@ -15,6 +15,7 @@
 #include "initArea.h"
 #include "scheduler.h"
 #include "asl.h"
+#include <umps/arch.h>
 
 /* Funzioni per la gestione delle eccezioni */
 void sysbk_handler(void);
