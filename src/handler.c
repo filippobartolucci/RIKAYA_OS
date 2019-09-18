@@ -97,9 +97,9 @@ void sysbk_handler(void){
 		old_state->reg_v0 = flag;
 
 		/*Gestione del tempo dei processi */
-		current_process->kernel_time += TOD_LO - current_process->p_kernel_time_start;
+		current_process->kernel_time += TOD_LO - current_process->kernel_time_start;
 		current_process->user_time_start = TOD_LO;
-		current_process->kernelt_time_start = 0;
+		current_process->kernel_time_start = 0;
 
 
 		LDST(&old_state);
@@ -152,7 +152,7 @@ void int_handler(void){
 
       case 7:
 			/* Terminal */
-			u32 bitmap = whichConst(line);
+			unsigned int bitmap = whichConst(line);
 			int devnum = whichDevice(*bitmap);
 			term = (termreg_t *)DEV_REG_ADDR(line,devnum);
 			transm_st = (term->transm_status) & STATUS_MASK;
@@ -163,8 +163,8 @@ void int_handler(void){
 				/* Libero il processo bloccato sul semaforo */
 				if(semd_keys[7][devnum]){
 					semd_keys[7][devnum]++;
-					freed = removeBlocked(&semd_key[7][devnum]);
-					freed -> p_s.reg_v0 = term -> transm_st;
+					freed = removeBlocked(&semd_keys[7][devnum]);
+					freed -> p_s.reg_v0 = term -> transm_status;
 					freed -> priority = freed -> original_priority;
 					insertProcQ(&ready_queue, freed);
 				}
@@ -179,8 +179,8 @@ void int_handler(void){
 				/* Libero il processo bloccato sul semaforo */
 				if(semd_keys[8][devnum]){
 					semd_keys[8][devnum]++;
-					freed = removeBlocked(&semd_key[8][devnum]);
-					freed -> p_s.reg_v0 = term -> recv_st;
+					freed = removeBlocked(&semd_keys[8][devnum]);
+					freed -> p_s.reg_v0 = term -> recv_status;
 					freed -> priority = freed -> original_priority;
 					insertProcQ(&ready_queue, freed);
 				}
@@ -196,7 +196,7 @@ void int_handler(void){
 	  		/* Caso in cui sia un device qualsiasi,
 	   	 	 * cerco quale ha sollevato l'interrupt
 			*/
-			u32 bitmap = whichConst(line);
+			unsigned int bitmap = whichConst(line);
 			int devnum = whichDevice(*bitmap);
 			dev = (dtpreg_t*)DEV_REG_ADDR(line, devnum);
 
@@ -204,7 +204,7 @@ void int_handler(void){
 			if(semd_keys[line][devnum]){
 				semd_keys[line][devnum]++;
 				freed = removeBlocked(&semd_key[line][devnum]);
-				freed -> p_s.reg_v0 = term -> recv_st;
+				freed -> p_s.reg_v0 = term -> recv_status;
 				freed -> priority = freed -> original_priority;
 				insertProcQ(&ready_queue, freed);
 			}
@@ -217,7 +217,7 @@ void int_handler(void){
 			break;
     }
 
-    current_process->p_user_time_start = TOD_LO;
+    current_process->user_time_start = TOD_LO;
     LDST(&old_state);
 }
 
@@ -291,10 +291,10 @@ void tlb_handler(void){
 	old_state->reg_t9 += WORD_SIZE;
 
 	/* Se il processo non ha un handler viene terminato */
-	if (!cur_proc->spec_set[SPEC_TYPE_TLB])
+	if (!current_process->spec_set[SPEC_TYPE_TLB])
 		Terminate_Process(NULL);
 
-	memcpy(old_area, current_process->spec_oarea[SPEC_TYPE_TLB], sizeof(state_t));
+	memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_TLB], sizeof(state_t));
 	LDST(current_process->spec_narea[SPEC_TYPE_TLB]);
 }
 
@@ -422,7 +422,7 @@ HIDDEN int terminateProcess(void ** pid){
         insertChild(tut, child);
 
     /* Rilascio dell'eventuale semaforo della vittima*/
-    if (victim->p_semKey){
+    if (victim->p_semkey){
         (*victim->p_semkey)++;
         /* Rimuovo la vittima dalla coda del semaforo */
         outBlocked(victim);
@@ -485,7 +485,7 @@ HIDDEN void Passeren(int *semaddr){
  * al prossimo tick del clock di sistema
 */
 HIDDEN void Wait_Clock(void){
-	Passeren(*waitc_sem);
+	Passeren(&waitc_sem);
 }
 
 /* SYSCALL 7
