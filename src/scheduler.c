@@ -16,6 +16,7 @@ void scheduler(void) {
 
     /* Ultimo processo in esecuzione */
     pcb_t *old = outProcQ(&ready_queue, current_process);
+    pcb_t* next;
 
     /* Se old != NULL */
 	  if (old){
@@ -24,15 +25,15 @@ void scheduler(void) {
         	/* Salvo lo stato dell'esecuzione prima dell'eccezione */
 		      memcpy(&old->p_s,interrupt_oldarea, sizeof(state_t));
 
-        	old->p_kernelt_total += TOD_LO - current->p_kernelt_start;
-        	old->p_kernelt_start = 0;
+        	old->kernel_time += TOD_LO - current_process->kernel_time_start;
+        	old->kernel_time = 0;
 
         	/* Reinserisco il processi nella ready_queue */
         	insertProcQ(&ready_queue,old);
  	  }
 
     /* Estraggo il processo con priorità più alta dalla ready_queue */
-	current_process = headProcQ(&ready_queue);
+	  next = headProcQ(&ready_queue);
 
     /* Controllo se ci sono ancora processi da eseguire */
     checkEmptyProcQ();
@@ -41,8 +42,10 @@ void scheduler(void) {
     priorityAging();
     /* Imposto il PLT */
     setTIMER(TIMESLICE * TIME_SCALE);
+    /* Context switch */
+    current_process = next;
     /* Aggiorno il tempo */
-    next->p_user_time_start = TOD_LO;
+    next->user_time_start = TOD_LO;
     /* Carico lo stato del processo corrente */
     LDST(&current_process->p_s);
 }
@@ -66,3 +69,5 @@ HIDDEN inline void priorityAging(void) {
 HIDDEN inline void restorePriority(pcb_t *pcb){
 	pcb->priority = pcb->original_priority;
 }
+
+
