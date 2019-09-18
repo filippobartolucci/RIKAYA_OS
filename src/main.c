@@ -52,10 +52,10 @@ void setProcess(){
     /* Imposto la priorità */
 	tmp->priority = tmp->original_priority = 1;
     /* Imposto lo STACK POINTER */
-	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * 1;
+	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE;
     /* Imposto lo STATUS del process */
-	tmp->p_s.status = (STATUS_KUc | STATUS_TE | (0xFF00 ));//P_STATUS;
-	
+	tmp->p_s.status = 0|1<<27|0xFF<<8;
+
     /* Aumento il contatore dei processi */
 	process_count++;
     /* Inserisco il PCB nella lista dei processi in stato ready */
