@@ -103,7 +103,7 @@ void sysbk_handler(void){
 		current_process->kernel_time_start = 0;
 
 
-		LDST(&old_state->p_s);
+		LDST(old_state);
 	}
     else scheduler();
 }
@@ -222,7 +222,7 @@ void int_handler(void){
     }
 
     current_process->user_time_start = TOD_LO;
-    LDST(&old_state);
+    LDST(old_state);
 }
 
 

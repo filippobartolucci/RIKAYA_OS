@@ -54,7 +54,8 @@ void setProcess(){
     /* Imposto lo STACK POINTER */
 	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * 1;
     /* Imposto lo STATUS del process */
-	tmp->p_s.status = P_STATUS;
+	tmp->p_s.status = (STATUS_KUc | STATUS_TE | (0xFF00 ));//P_STATUS;
+	
     /* Aumento il contatore dei processi */
 	process_count++;
     /* Inserisco il PCB nella lista dei processi in stato ready */
