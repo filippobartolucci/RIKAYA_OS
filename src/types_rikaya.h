@@ -19,13 +19,13 @@ typedef struct pcb_t {
                         p_sib;
 
 	/* processor state, etc */
-	state_t       		p_s;     
+	state_t       		p_s;
 
 	/* process priority */
 	int			priority;
 	int 		original_priority;
-    
-    	int tutor;
+
+    int tutor;
 
 	/* key of the semaphore on which the process is eventually blocked */
 	int			*p_semkey;

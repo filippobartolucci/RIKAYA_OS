@@ -63,6 +63,7 @@ typedef u32 bool;
 
 #define CR 0x0a   /* carriage return as returned by the terminal */
 
+#define STATUSMASK 0xFF
 /* Indirizzi per le NEW/OLD AREA della ROM */
 #define INT_NEWAREA 0x2000008c
 #define INT_OLDAREA 0x20000000

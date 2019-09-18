@@ -21,19 +21,6 @@
 /* Funzioni di test per PHASE2 */
 extern void test();
 
-void system(){
-	state_t test_s;
-
-	memset(&test_s, 0, sizeof(test_s));
-	test_s.pc_epc = (memaddr)test;
-	test_s.reg_sp = RAMTOP - FRAME_SIZE * 2;  /* First stack is for the system process */
-	test_s.status = (1<<2|0xFF00|1<<27);
-	SYSCALL(SETTUTOR, 0, 0, 0);
-	SYSCALL(CREATEPROCESS, (u32)&test_s, 1, 0);
-
-	while(1);
-}
-
 /* Lista dei processi ready */
 LIST_HEAD(ready_queue);
 /* Puntatore al processo attivo */
@@ -65,9 +52,7 @@ void setProcess(u32 *proc){
     /* Imposto lo STACK POINTER */
 	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * 1;
     /* Imposto lo STATUS del process */
-	tmp->p_s.status = (1<<2|0xFF00|1<<27);
-    /* Setto il tempo */
-    tmp->p_wallclock_start = TOD_LO;
+	tmp->p_s.status = ST_PREV_INTERRUPTS | ST_LCL_TIMER | ST_IM_ALL;;
     /* Aumento il contatore dei processi */
 	process_count++;
     /* Inserisco il PCB nella lista dei processi in stato ready */
@@ -83,7 +68,6 @@ int main(void){
     *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
 
     setProcess((u32*)test);
-    setProcess((u32*)system);
     /* Passo il controllo allo scheduler */
     scheduler();
 

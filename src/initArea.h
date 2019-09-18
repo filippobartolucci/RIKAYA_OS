@@ -28,7 +28,7 @@ u32 soft_block_count;
 state_t *sysbk_newarea;
 state_t *program_trap_newarea;
 state_t *interrupt_newarea;
-state_t *tblmgt_newarea;
+state_t *tlbmgt_newarea;
 
 /* Puntatori alle OLD AREA della ROM */
 state_t *sysbk_oldarea;

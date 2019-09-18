@@ -290,7 +290,7 @@ HIDDEN inline int whichLine(u32* cause){
 
 /* Gestione TLB */
 void tlb_handler(void){
-	state_t* old_state = tblmgt_oldarea;
+	state_t* old_state = tlbmgt_oldarea;
 	old_state->pc_epc += WORD_SIZE;
 	old_state->reg_t9 += WORD_SIZE;
 
