@@ -49,10 +49,10 @@ void dummy() {
 	state_t test_s;
   memset(&test_s, 0, sizeof(test_s));
   test_s.pc_epc = (memaddr)test;
-  test_s.reg_sp = RAMTOP - FRAMESIZE * 2;  /* First stack is for the system process */
-  test_s.status = ST_PREV_INTERRUPTS | ST_LCL_TIMER | ST_IM_ALL;
+  test_s.reg_sp = RAMTOP - FRAME_SIZE * 2;  /* First stack is for the system process */
+  test_s.status = 0x0800ff07;
   SYSCALL(SETTUTOR, 0, 0, 0);
-  SYSCALL(CREATEPROCESS, (uint32_t)&test_s, 1, 0);
+  SYSCALL(CREATEPROCESS, (u32)&test_s, 1, 0);
   while (1);
 }
 
@@ -67,7 +67,9 @@ void setProcess(u32 proc,int n,int m){
     /* Imposto lo STACK POINTER */
 	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE*m;
     /* Imposto lo STATUS del process */
-	tmp->p_s.status = 0|1<<27|0xFF<<8|1;
+	tmp->p_s.status =0x0800ff07<
+	//0x0800ff07
+
   /* Aumento il contatore dei processi */
 	process_count++;
   /* Inserisco il PCB nella lista dei processi in stato ready */
@@ -82,9 +84,9 @@ void setProc(u32 pc, int priority, int m ){
 
   /* Set state */
   new_proc->p_s.pc_epc = pc;
-  new_proc->p_s.reg_sp = RAMTOP - FRAMESIZE * m;
-  new_proc->p_s.status = ST_PREV_INTERRUPTS | ST_LCL_TIMER | ST_IM_ALL;
-  new_proc->p_wallclock_start = TOD_LO;
+  new_proc->p_s.reg_sp = RAMTOP - FRAME_SIZE * m;
+  new_proc->p_s.status = 0x0800ff07;
+	process_count++;
 
   insertProcQ(&ready_queue, new_proc);
 }
@@ -101,7 +103,7 @@ int main(void){
 		waitc_sem = 0;
 
 		/* Imposto il primo processo */
-    setProc(dummy,-99,1);
+    setProc(dummy,1,1);
     /* Passo il controllo allo scheduler */
     scheduler();
 
