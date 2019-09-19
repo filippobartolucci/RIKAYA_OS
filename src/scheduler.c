@@ -52,7 +52,7 @@ void scheduler(void) {
 
 /* Funzione ausiliaria per verificare se il processo corrente è vuoto */
 HIDDEN inline void checkEmptyProcQ(void){
-    if(current_process == NULL){
+    if(current_process == NULL && list_empty(&ready_queue)){
         setSTATUS(getSTATUS()|(1UL));
         WAIT();
     }

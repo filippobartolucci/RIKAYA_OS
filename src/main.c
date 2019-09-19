@@ -63,13 +63,13 @@ void initProc(){
 		setBit(1,&(test->p_s.status),1);
 		test->p_s.status|=(255<<8);
 		test->p_s.status|=(1UL<<0);
-		test->p_s.status|=(1UL<<2); 
+		test->p_s.status|=(1UL<<2);
 		test->p_s.reg_sp = RAMTOP-FRAME_SIZE;
 		test->priority = 1;
 		test->original_priority= 1;
 		test->p_s.pc_epc = (unsigned int) test;
-		test->p_s.reg_t9 = test_pcb->p_s.pc_epc;
-		insertProcQ(&ready_queue, tmp);
+		test->p_s.reg_t9 = test->p_s.pc_epc;
+		insertProcQ(&ready_queue, test);
 }
 
 int main(void){
