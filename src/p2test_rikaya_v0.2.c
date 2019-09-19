@@ -152,7 +152,7 @@ void print(char *msg) {
 /*                 p1 -- the root process                            */
 /*                                                                   */
 void test() {
-	debug++;
+
 	SYSCALL(VERHOGEN, (int)&testsem, 0, 0);					/* V(testsem)   */
 
 	if (testsem != 1) { print("error: p1 v(testsem) with no effects\n"); PANIC(); }

@@ -89,7 +89,6 @@ void sysbk_handler(void){
                 terminateProcess(0);
             memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
           	LDST(current_process->spec_narea[SPEC_TYPE_SYSBP]);
-
     }
 
     /* Se c'è un processo viene caricato, altrimento ci pensa lo scheduler */

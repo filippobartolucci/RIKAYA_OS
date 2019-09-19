@@ -19,21 +19,21 @@ void scheduler(void) {
     pcb_t* next;
 
     /* Se old != NULL */
-	  if (old){
-        	/* Ripristino la sua priorità */
-		      restorePriority(old);
-        	/* Salvo lo stato dell'esecuzione prima dell'eccezione */
-		      memcpy(&old->p_s,interrupt_oldarea, sizeof(state_t));
+	if (old){
+        /* Ripristino la sua priorità */
+		restorePriority(old);
+        /* Salvo lo stato dell'esecuzione prima dell'eccezione */
+		memcpy(old->p_s,interrupt_oldarea, sizeof(state_t));
 
-        	old->kernel_time += TOD_LO - current_process->kernel_time_start;
-        	old->kernel_time = 0;
+        old->kernel_time += TOD_LO - current_process->kernel_time_start;
+        old->kernel_time = 0;
 
-        	/* Reinserisco il processi nella ready_queue */
-        	insertProcQ(&ready_queue,old);
- 	  }
+        /* Reinserisco il processi nella ready_queue */
+        insertProcQ(&ready_queue,old);
+ 	}
 
     /* Estraggo il processo con priorità più alta dalla ready_queue */
-	  next = headProcQ(&ready_queue);
+	next = headProcQ(&ready_queue);
 
     /* Controllo se ci sono ancora processi da eseguire */
     checkEmptyProcQ();
@@ -69,5 +69,3 @@ HIDDEN inline void priorityAging(void) {
 HIDDEN inline void restorePriority(pcb_t *pcb){
 	pcb->priority = pcb->original_priority;
 }
-
-
