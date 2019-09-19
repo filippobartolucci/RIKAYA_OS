@@ -44,16 +44,22 @@ state_t *program_trap_oldarea = (state_t *)PGMTRAP_OLDAREA;
 state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
 state_t *tlbmgt_oldarea = (state_t *)TLB_OLDAREA;
 
+/* Processo dummy */
+void dummy(){
+	SYSCALL(SETTUTOR,0,0,0);
+	setProcess(test,1,2);
+	while(TRUE);
+}
 
-void setProcess(){
+void setProcess(u32 proc,int n,int m){
     /* Prendo un PCB dalla lista dei PCB liberi */
 	pcb_t *tmp = allocPcb();
     /* Imposto il PROGRAM COUNTER del processo */
-	tmp->p_s.pc_epc = tmp->p_s.reg_t9 = (u32)test;
+	tmp->p_s.pc_epc = tmp->p_s.reg_t9 = (u32)proc;
     /* Imposto la priorità */
-	tmp->priority = tmp->original_priority = 1;
+	tmp->priority = tmp->original_priority = n;
     /* Imposto lo STACK POINTER */
-	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE;
+	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE*m;
     /* Imposto lo STATUS del process */
 	tmp->p_s.status = 0|1<<27|0xFF<<8;
 
@@ -70,10 +76,10 @@ int main(void){
     initASL();
     /* Setto Interval Timer */
     *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
-
+	/* Inizializzo semafori */
 	memset(&semd_keys,1,(sizeof(int))*7*8);
-
-    setProcess();
+	/* Imposto il primo processo */
+    setProcess(dummy,0,1);
     /* Passo il controllo allo scheduler */
     scheduler();
 
