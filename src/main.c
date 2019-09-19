@@ -45,11 +45,17 @@ state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
 state_t *tlbmgt_oldarea = (state_t *)TLB_OLDAREA;
 
 /* Processo dummy */
-void dummy(){
-	SYSCALL(SETTUTOR,0,0,0);
-	while(TRUE)
-		debug = 0xAFAF;
+void dummy() {
+	state_t test_s;
+  memset(&test_s, 0, sizeof(test_s));
+  test_s.pc_epc = (memaddr)test;
+  test_s.reg_sp = RAMTOP - FRAMESIZE * 2;  /* First stack is for the system process */
+  test_s.status = ST_PREV_INTERRUPTS | ST_LCL_TIMER | ST_IM_ALL;
+  SYSCALL(SETTUTOR, 0, 0, 0);
+  SYSCALL(CREATEPROCESS, (uint32_t)&test_s, 1, 0);
+  while (1);
 }
+
 
 void setProcess(u32 proc,int n,int m){
     /* Prendo un PCB dalla lista dei PCB liberi */
@@ -68,6 +74,21 @@ void setProcess(u32 proc,int n,int m){
 	insertProcQ(&ready_queue, tmp);
 }
 
+void setProc(u32 pc, int priority, int m ){
+	pcb_t *new_proc = allocPcb();
+
+  /* Set priority */
+  new_proc->priority = new_proc->original_priority = priority;
+
+  /* Set state */
+  new_proc->p_s.pc_epc = pc;
+  new_proc->p_s.reg_sp = RAMTOP - FRAMESIZE * m;
+  new_proc->p_s.status = ST_PREV_INTERRUPTS | ST_LCL_TIMER | ST_IM_ALL;
+  new_proc->p_wallclock_start = TOD_LO;
+
+  insertProcQ(&ready_queue, new_proc);
+}
+
 int main(void){
     /* Inizializzazione del sistema */
     initAREA();
@@ -78,9 +99,9 @@ int main(void){
 		/* Inizializzo semafori */
 		memset(&semd_keys,1,(sizeof(int))*7*8);
 		waitc_sem = 0;
+
 		/* Imposto il primo processo */
-    setProcess(dummy,-99,1);
-		setProcess(test,1,2);
+    setProc(dummy,-99,1);
     /* Passo il controllo allo scheduler */
     scheduler();
 
