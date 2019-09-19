@@ -71,13 +71,7 @@ int main(void){
     /* Setto Interval Timer */
     *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
 
-	for(int i=0;i<=8;i++){
-		for(int j=0;i<8;j++){
-			semd_keys[i][j] = 1;
-			waiting_pcbs[i][j] = NULL;
-		}
-	}
-
+	memset(&semd_keys,1,(sizeof(int))*7*8);
 
     setProcess();
     /* Passo il controllo allo scheduler */

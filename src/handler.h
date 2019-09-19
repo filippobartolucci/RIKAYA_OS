@@ -38,7 +38,7 @@ HIDDEN int terminateProcess(void ** pid);
 HIDDEN pcb_t* Verhogen(int* semaddr);
 HIDDEN void Passeren(int *semaddr);
 HIDDEN void Wait_Clock(void);
-HIDDEN int Do_IO(u32 command, u32 *reg);
+HIDDEN int Do_IO(u32 command, u32 *reg, int transm);
 HIDDEN void Set_Tutor();
 HIDDEN int Spec_Passup(int type, state_t *old, state_t *new);
 HIDDEN void Get_pid_ppid(void ** pid, void ** ppid);

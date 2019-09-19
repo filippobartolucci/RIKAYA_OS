@@ -10,6 +10,8 @@
 #include "handler.h"
 #include "asl.h"
 
+extern u32 debug;
+
 /* Gestione SYSCALL/BREAKPOINT */
 void sysbk_handler(void){
 
@@ -502,24 +504,30 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
 	dtpreg_t *devreg = (dtpreg_t *) reg;
 	termreg_t *termreg = (termreg_t*) reg;
 
-	int line,devn;
-	for(int i=3;i<8;i++){
+	int line=0;
+    int devn=0;
+	for(int i=3;i<8;i++)
 		for(int j=0;j<8;i++){
-			if (DEV_REG_ADDR(i,j) == (u32)devreg){
+			if (DEV_REG_ADDR(i,j) == devreg){
 				line = i;
 				devn = j;
-			}
+                break;
+			}if(line) break;
 		}
-	}
-	Passeren(&semaddr[line][devn]);
-	if (current_process!=NULL){
+	
+
+	Passeren(&semd_keys[line][devn]);
+
+    if (current_process!=NULL){
 		if(line < 7){
 			devreg->command = command;
 		}else{
-			if(transm){
+			if(!transm){
+                debug = 0xABCD;
 				termreg->transm_command = command;
 
 			}else{
+
 				termreg->recv_command = command;
 			}
 		}
@@ -527,7 +535,6 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
 		outProcQ(&ready_queue,current_process);
 		current_process = NULL;
 	}
-	Passeren(&semd_keys[line][devn]);
 }
 
 /* SYSCALL 8
