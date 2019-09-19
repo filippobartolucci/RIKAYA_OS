@@ -55,23 +55,20 @@ int setBit (int shift, unsigned int *reg, int value){
         return 0;
 }
 
-void initProc{
+void initProc(){
 		pcb_t *test=allocPcb;
-		setBit(0,&(test_pcb->p_s.status),1);
-		setBit(24,&(test_pcb->p_s.status),0);
-		setBit(27,&(test_pcb->p_s.status),1);
-		setBit(1,&(test_pcb->p_s.status),1);
-		test_pcb->p_s.status|=(255<<8);
-		test_pcb->p_s.status|=(1UL<<0);
-		test_pcb->p_s.status|=(1UL<<2); //LDST() fa un push all'indietro dei bit IE, dunque per settare l'IEc occorre settare anche IEp.
-		test_pcb->p_s.reg_sp = RAMTOP-FRAMESIZE;
-		test_pcb->priority = 1;
-		test_pcb->original_priority= 1; /*aggiunto il campo original_priority per implementare aging*/
-
-		/*Per ogni pcb, faccio puntare il campo pc a una delle tre funzioni test1, test2 e test3*/
-
-		test_pcb->p_s.pc_epc = (unsigned int) test;
-		test_pcb->p_s.reg_t9 = test_pcb->p_s.pc_epc;
+		setBit(0,&(test->p_s.status),1);
+		setBit(24,&(test->p_s.status),0);
+		setBit(27,&(test->p_s.status),1);
+		setBit(1,&(test->p_s.status),1);
+		test->p_s.status|=(255<<8);
+		test->p_s.status|=(1UL<<0);
+		test->p_s.status|=(1UL<<2); 
+		test->p_s.reg_sp = RAMTOP-FRAME_SIZE;
+		test->priority = 1;
+		test->original_priority= 1;
+		test->p_s.pc_epc = (unsigned int) test;
+		test->p_s.reg_t9 = test_pcb->p_s.pc_epc;
 		insertProcQ(&ready_queue, tmp);
 }
 
