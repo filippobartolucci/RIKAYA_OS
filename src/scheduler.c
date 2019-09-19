@@ -23,7 +23,7 @@ void scheduler(void) {
         /* Ripristino la sua priorità */
 		restorePriority(old);
         /* Salvo lo stato dell'esecuzione prima dell'eccezione */
-		memcpy(old->p_s,interrupt_oldarea, sizeof(state_t));
+		memcpy(&old->p_s,(state_t *)INT_OLDAREA, sizeof(state_t));
 
         old->kernel_time += TOD_LO - current_process->kernel_time_start;
         old->kernel_time = 0;
