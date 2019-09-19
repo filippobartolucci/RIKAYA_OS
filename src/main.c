@@ -47,8 +47,8 @@ state_t *tlbmgt_oldarea = (state_t *)TLB_OLDAREA;
 /* Processo dummy */
 void dummy(){
 	SYSCALL(SETTUTOR,0,0,0);
-	setProcess(test,1,2);
-	while(TRUE);
+	while(TRUE)
+		debug = 0xAFAF;
 }
 
 void setProcess(u32 proc,int n,int m){
@@ -61,11 +61,10 @@ void setProcess(u32 proc,int n,int m){
     /* Imposto lo STACK POINTER */
 	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE*m;
     /* Imposto lo STATUS del process */
-	tmp->p_s.status = 0|1<<27|0xFF<<8;
-
-    /* Aumento il contatore dei processi */
+	tmp->p_s.status = 0|1<<27|0xFF<<8|1;
+  /* Aumento il contatore dei processi */
 	process_count++;
-    /* Inserisco il PCB nella lista dei processi in stato ready */
+  /* Inserisco il PCB nella lista dei processi in stato ready */
 	insertProcQ(&ready_queue, tmp);
 }
 
@@ -76,11 +75,12 @@ int main(void){
     initASL();
     /* Setto Interval Timer */
     *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
-	/* Inizializzo semafori */
-	memset(&semd_keys,1,(sizeof(int))*7*8);
-	waitclok_sem = 0;
-	/* Imposto il primo processo */
-    setProcess(dummy,0,1);
+		/* Inizializzo semafori */
+		memset(&semd_keys,1,(sizeof(int))*7*8);
+		waitc_sem = 0;
+		/* Imposto il primo processo */
+    setProcess(dummy,-99,1);
+		setProcess(test,1,2);
     /* Passo il controllo allo scheduler */
     scheduler();
 

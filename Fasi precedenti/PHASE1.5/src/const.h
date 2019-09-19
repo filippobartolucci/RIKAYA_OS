@@ -37,6 +37,8 @@ typedef unsigned int u32;
 #define STATUS_TE  1 << 27
 #define STATUS_CU  1 << 28
 
+
+
 /* Definisco una Macro per settare lo status all'interno delle New Area, operando con un OR bit a bit imposto:
  * - Lo stato del coprocessore ad 1
  * - Local Timer ON
