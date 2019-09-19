@@ -26,6 +26,7 @@ void sysbk_handler(void){
 
     /* Stato dell'esecuzione prima dell'eccezione */
     state_t *old_state = sysbk_oldarea;
+	memcpy(current_process->p_s,state, sizeof(state_t));
 
     /* Viene incrementato il valore del PC */
     old_state->pc_epc += WORD_SIZE;
@@ -169,12 +170,11 @@ void int_handler(void){
 				/* Libero il processo bloccato sul semaforo */
 				if(semd_keys[7][devnum]){
 					semd_keys[7][devnum]++;
-					freed = removeBlocked(&semd_keys[7][devnum]);
+					freed = waiting_pcbs[line][devn];
 					freed -> p_s.reg_v0 = term -> transm_status;
 					freed -> priority = freed -> original_priority;
 					insertProcQ(&ready_queue, freed);
 				}
-
 				term -> transm_command = DEV_ACK;
 				while(transm_st != DEV_ST_READY);
 			}
@@ -185,7 +185,7 @@ void int_handler(void){
 				/* Libero il processo bloccato sul semaforo */
 				if(semd_keys[8][devnum]){
 					semd_keys[8][devnum]++;
-					freed = removeBlocked(&semd_keys[8][devnum]);
+					freed = waiting_pcbs[line][devn];
 					freed -> p_s.reg_v0 = term -> recv_status;
 					freed -> priority = freed -> original_priority;
 					insertProcQ(&ready_queue, freed);
@@ -209,7 +209,7 @@ void int_handler(void){
 			/* Libero il processo bloccato sul semaforo */
 			if(semd_keys[line][devnum]){
 				semd_keys[line][devnum]++;
-				freed = removeBlocked(&semd_keys[line][devnum]);
+				freed = waiting_pcbs[line][devn];
 				freed -> p_s.reg_v0 = term -> recv_status;
 				freed -> priority = freed -> original_priority;
 				insertProcQ(&ready_queue, freed);
@@ -514,10 +514,8 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
                 break;
 			}if(line) break;
 		}
-	
 
 	Passeren(&semd_keys[line][devn]);
-
     if (current_process!=NULL){
 		if(line < 7){
 			devreg->command = command;
