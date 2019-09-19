@@ -71,7 +71,7 @@ void sysbk_handler(void){
 			Wait_Clock();
 			break;
 		case WAITIO:
-			Do_IO(old_state->reg_a1, old_state->reg_a2);
+			Do_IO((u32)old_state->reg_a1, (u32 *)old_state->reg_a2, (int)old_state->reg_a3);
 			break;
 		case SETTUTOR:
 			Set_Tutor();
@@ -110,7 +110,8 @@ void sysbk_handler(void){
 /* Gestione INTERRUPT */
 
 int semd_keys[8][7];
-int waitc_sem;
+int waitc_sem = 0;
+pcb_t *waiting_pcbs[8][7];
 
 void int_handler(void){
 
@@ -468,7 +469,6 @@ HIDDEN pcb_t* Verhogen(int* semaddr){
  * L'indirizzo della variabile agisce da identificatore per il semaforo
 */
 HIDDEN void Passeren(int *semaddr){
-	print("passeren\n");
     *semaddr--;
     if (*semaddr<0){
         /* Rimuovo il processo dalla ready_queue */
@@ -498,7 +498,7 @@ HIDDEN void Wait_Clock(void){
  * indicato come puntatore nel secondo argomento.
  * Il valore restituito è il contenuto del registro di status del dispositivo
 */
-HIDDEN int Do_IO(u32 command, u32* reg){
+HIDDEN int Do_IO(u32 command, u32* reg, int transm){
 	dtpreg_t *devreg = (dtpreg_t *) reg;
 	termreg_t *termreg = (termreg_t*) reg;
 
@@ -511,13 +511,21 @@ HIDDEN int Do_IO(u32 command, u32* reg){
 			}
 		}
 	}
+	Passeren(&semaddr[line][devn]);
+	if (current_process!=NULL){
+		if(line < 7){
+			devreg->command = command;
+		}else{
+			if(transm){
+				termreg->transm_command = command;
 
-	if(line<7){
-		devreg->command = command;
-	}else{
-		if(1){
-			termreg->recv_command = command;
+			}else{
+				termreg->recv_command = command;
+			}
 		}
+		waiting_pcbs[line][devn] = current_process;
+		outProcQ(&ready_queue,current_process);
+		current_process = NULL;
 	}
 	Passeren(&semd_keys[line][devn]);
 }

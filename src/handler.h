@@ -25,6 +25,7 @@ void pgmtrp_handler(void);
 
 int semd_keys[8][7];
 int waitc_sem;
+pcb_t *waiting_pcbs[8][7];
 /* Funzioni ausiliarie */
 HIDDEN u32 whichConst(u32 line);
 HIDDEN inline int whichLine(u32* bitmap);
