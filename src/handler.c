@@ -401,7 +401,7 @@ HIDDEN int terminateProcess(void ** pid){
 
     /* Controllo se la vittima è il processo root */
     if (victim->p_parent == NULL)
-				/* Terminazione processo root */
+	/* Errore */
         return -1;
 
     pcb_t *tut = current_process;
