@@ -78,6 +78,7 @@ int main(void){
     *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
 	/* Inizializzo semafori */
 	memset(&semd_keys,1,(sizeof(int))*7*8);
+	waitclok_sem = 0;
 	/* Imposto il primo processo */
     setProcess(dummy,0,1);
     /* Passo il controllo allo scheduler */
