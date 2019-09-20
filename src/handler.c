@@ -50,7 +50,7 @@ void sysbk_handler(void){
 	    memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
 	    LDST(current_process->spec_narea[SPEC_TYPE_SYSBP]);
     }
-
+	debug = 0xCEDDA;
     /* SYSCALL */
     int flag = 0;
     switch (syscall_number){
@@ -117,7 +117,7 @@ int waitc_sem = 0;
 pcb_t *waiting_pcbs[8][7];
 
 void int_handler(void){
-
+	debug = 0xFAFAFA;
     /* Stato dell'esecuzione prima dell'eccezione */
     state_t *old_state = interrupt_oldarea;
     /* Causa dell'interrupt */
@@ -128,10 +128,9 @@ void int_handler(void){
 	/* Struttura per il terminale */
 	termreg_t *term;
 	pcb_t* freed;
-
+	debug = 0xCacca;
     /* Cerco il dispositivo che ha sollevato l'interrupt */
     int line = whichLine(cause);
-
     unsigned int bitmap;
     int devnum;
 
@@ -141,13 +140,13 @@ void int_handler(void){
 
 
     switch (line) {
-		case 0:
+		case 0:	
+			debug = 0xFFF;
 			*((u32*) 0x10000400) = 1;
 			break;
 
 		case 1:
 			/* Processor Local Timer */
-			setTIMER((unsigned int)-1);
 			scheduler();
 			break;
 
@@ -257,17 +256,27 @@ HIDDEN u32 whichConst(u32 line){
 /* Funzione per trovare quale dispositivo ha causato l'interrupt */
 HIDDEN inline int whichDevice(u32* bitmap) {
 	int dev_n = 0;
-	while (*bitmap > 1) {
+
+	while (*bitmap > 1){
 		dev_n++;
 		*bitmap >>= 1;
 	}
 	return dev_n;
 }
 HIDDEN inline int whichLine(u32* cause){
-    /* I bit da 8 a 15 indicano quale linea interrupt sia attiva
+    /* I bit da 8 a 15 indicano quale linea intbierrupt sia attiva
      * Utilizziamo uno shift per eliminare i bit meno significativi che non ci servono
     */
-    *cause = *cause >> 8;
+    u32 c=getCAUSE();
+    
+    for(int i=8;i<16;i++){
+	    u32 bit=1;
+	    bit=bit<<i;
+	    if ((c & i)>>i == (u32)i)
+		    return i;
+    }				
+    return -1;
+}
 
     /* Ricerca dell' interrupt
      * Controlli fatti in ordine di priorità.
@@ -275,7 +284,7 @@ HIDDEN inline int whichLine(u32* cause){
      * maggiore. Il controllo confronta
      * la causa dell'interrupt con una causa in
      * cui il bit del dispositivo che si sta controllando è a 1.
-    */
+    *//*
     u32 line = 0;
     u32 mask = 0x1;
     while (*cause != mask) {
@@ -285,7 +294,7 @@ HIDDEN inline int whichLine(u32* cause){
 
     return line;
 }
-
+**/
 
 /*FINE INTERRUPT*/
 
@@ -356,26 +365,27 @@ HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* w
  */
 HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
 	pcb_t* child = allocPcb();
-
+	debug = 1;
 	if(cpid)
 		*((pcb_t **)cpid) = child;
 
 	if(!child)
 		return -1;
-
+	
 	/* Setto i valori delllo stato */
 	memcpy(&child->p_s, statep, sizeof(state_t));
-
+	debug = 2;
 	/* Setto i valori delle priorità */
 	child->original_priority = child->priority = priority;
 
 	/* Setto i valori del tempo di esecuzione */
 	child->total_time = TOD_LO;
-
+	debug =3;
 	/* Inserisco il processo come figlio del chiamante */
 	insertChild(current_process, child);
 	insertProcQ(&ready_queue, child);
 	process_count++;
+	debug = 4;
 	return 0;
 }
 
@@ -521,7 +531,6 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
 			devreg->command = command;
 		}else{
 			if(!transm){
-                debug = 0xABCD;
 				termreg->transm_command = command;
 
 			}else{

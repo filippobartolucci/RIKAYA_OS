@@ -19,9 +19,7 @@
 #include "asl.h"
 
 /* Traced Regions */
-u32 debug = 0;
-
-
+u32 debug=0;
 /* Funzioni di test per PHASE2 */
 extern void test();
 
@@ -44,16 +42,32 @@ state_t *program_trap_oldarea = (state_t *)PGMTRAP_OLDAREA;
 state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
 state_t *tlbmgt_oldarea = (state_t *)TLB_OLDAREA;
 
+void dummy(){
+	state_t proc;
 
-void setProcess(){
+	memset(&proc,0,sizeof(proc));
+	proc.pc_epc = (u32) test;
+	proc.reg_sp = RAMTOP - FRAME_SIZE *2;
+	proc.status = getSTATUS()|1UL;
+	debug = 0xCACCA;
+	SYSCALL(SETTUTOR,0,0,0);
+	debug = 0xBABBA;
+	SYSCALL(CREATEPROCESS, (u32) &proc,1,0);
+
+	setSTATUS(getSTATUS()|1UL);
+	while (1)
+		debug=0xBEFFA;
+}
+
+void setProcess(u32 proc, int prio, int frame){
     /* Prendo un PCB dalla lista dei PCB liberi */
 	pcb_t *tmp = allocPcb();
     /* Imposto il PROGRAM COUNTER del processo */
-	tmp->p_s.pc_epc = tmp->p_s.reg_t9 = (u32)test;
+	tmp->p_s.pc_epc = tmp->p_s.reg_t9 = (u32)proc;
     /* Imposto la priorità */
-	tmp->priority = tmp->original_priority = 1;
+	tmp->priority = tmp->original_priority = prio;
     /* Imposto lo STACK POINTER */
-	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE;
+	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE*frame;
     /* Imposto lo STATUS del process */
 	tmp->p_s.status = 0|1<<27|0xFF<<8;
 
@@ -70,10 +84,10 @@ int main(void){
     initASL();
     /* Setto Interval Timer */
     *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
+    memset(&semd_keys,1,(sizeof(int))*7*8);
 
-		memset(&semd_keys,1,(sizeof(int))*7*8);
-
-    setProcess();
+    //setProcess(test,1,2);
+    setProcess(dummy,0,1);
     /* Passo il controllo allo scheduler */
     scheduler();
 

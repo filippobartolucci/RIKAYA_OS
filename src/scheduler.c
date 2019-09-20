@@ -52,8 +52,9 @@ void scheduler(void) {
 
 /* Funzione ausiliaria per verificare se il processo corrente è vuoto */
 HIDDEN inline void checkEmptyProcQ(void){
-    if(current_process == NULL && process_count == 0)
-        HALT();
+    if(current_process == NULL && list_empty(&ready_queue))
+        setSTATUS(getSTATUS()|1UL);
+	WAIT();
 }
 
 /* Funzione che si occupa del meccanismo di aging delle priorità dei PCB nella ready queue */
