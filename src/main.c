@@ -20,7 +20,7 @@
 
 /* Traced Regions */
 u32 debug = 0;
-u32 debug2 = 0;
+
 
 /* Funzioni di test per PHASE2 */
 extern void test();
@@ -71,7 +71,7 @@ int main(void){
     /* Setto Interval Timer */
     *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
 
-	memset(&semd_keys,1,(sizeof(int))*7*8);
+		memset(&semd_keys,1,(sizeof(int))*7*8);
 
     setProcess();
     /* Passo il controllo allo scheduler */

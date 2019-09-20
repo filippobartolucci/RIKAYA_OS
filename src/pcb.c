@@ -53,6 +53,7 @@ pcb_t *allocPcb(void){
 	list_del(&(tmp->p_next));
 
 	/* Inizializzo tutti i campi di tmp a NULL */
+	/*
 	tmp->p_parent = NULL;
 	tmp->p_semkey = NULL;
 	tmp->priority = 0;
@@ -61,16 +62,14 @@ pcb_t *allocPcb(void){
 	tmp->p_s.cause = 0;
 	tmp->p_s.status = 0;
 	tmp->p_s.pc_epc = 0;
-    tmp->tutor = FALSE;
-
-	/* Per il campo p_s.gpr[] uso un for per settare a 0 tutti le 29 variabili dell' array */
-	int j = 0;
+  tmp->tutor = FALSE;
 	for(;j<29;j++){
 		tmp->p_s.gpr[j] = 0;
 	}
 	tmp->p_s.hi = 0;
 	tmp->p_s.lo = 0;
-
+	*/
+	memset(tmp,0,sizeof(pcb_t));
 	INIT_LIST_HEAD(&(tmp->p_next));
 	INIT_LIST_HEAD(&(tmp->p_child));
 	INIT_LIST_HEAD(&(tmp->p_sib));

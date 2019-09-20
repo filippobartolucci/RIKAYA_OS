@@ -22,24 +22,24 @@ void sysbk_handler(void){
 	    current_process->user_time_start = 0;
 	}
 
-    current_process->kernel_time_start = TOD_LO;
+  current_process->kernel_time_start = TOD_LO;
 
     /* Stato dell'esecuzione prima dell'eccezione */
-    state_t *old_state = sysbk_oldarea;
-	memcpy(current_process->p_s,state, sizeof(state_t));
+  	state_t *old_state = sysbk_oldarea;
 
-    /* Viene incrementato il valore del PC */
-    old_state->pc_epc += WORD_SIZE;
-	old_state->reg_t9 += WORD_SIZE;
+
+  	/* Viene incrementato il valore del PC */
+  	old_state->pc_epc += WORD_SIZE;
+		old_state->reg_t9 += WORD_SIZE;
 
     /* Registro nel quale è salvata la SYSCALL chiamata */
-    u32 syscall_number = old_state->reg_a0;
+  	u32 syscall_number = old_state->reg_a0;
 
     /* Causa dell'eccezione */
-    u32 *cause = old_state->cause;
+  	u32 *cause = old_state->cause;
 
     /* Parametri della SYSCALL */
-    u32 *arg1 =  &old_state->reg_a1;
+  	u32 *arg1 =  &old_state->reg_a1;
     u32 *arg2 =  &old_state->reg_a2;
     u32 *arg3 =  &old_state->reg_a3;
 
