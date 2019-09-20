@@ -272,8 +272,9 @@ HIDDEN inline int whichLine(u32* cause){
     for(int i=8;i<16;i++){
 	    u32 bit=1;
 	    bit=bit<<i;
-	    if ((c & i)>>i == (u32)i)
-		    return i;
+	    //if ((c & i)>>i == (u32)i)
+	    if((bit & c)>>i == (u32)i) //ho cambiato c con bit, dovrebbe funzionare ma non va :|
+	    	return i;
     }				
     return -1;
 }
