@@ -48,13 +48,13 @@ void dummy(){
 	memset(&proc,0,sizeof(proc));
 	proc.pc_epc = (u32) test;
 	proc.reg_sp = RAMTOP - FRAME_SIZE *2;
-	proc.status = getSTATUS()|1UL;
+	proc.status = 1<<2|1<<27|0xFF00|0x1;
 	debug = 0xCACCA;
 	SYSCALL(SETTUTOR,0,0,0);
 	debug = 0xBABBA;
 	SYSCALL(CREATEPROCESS, (u32) &proc,1,0);
 
-	setSTATUS(getSTATUS()|1UL);
+	
 	while (1)
 		debug=0xBEFFA;
 }
