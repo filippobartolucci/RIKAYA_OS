@@ -26,11 +26,11 @@ void sysbk_handler(void){
 
     /* Stato dell'esecuzione prima dell'eccezione */
     state_t *old_state = sysbk_oldarea;
-
+	memcpy(current_process->p_s,state, sizeof(state_t));
 
     /* Viene incrementato il valore del PC */
     old_state->pc_epc += WORD_SIZE;
-		old_state->reg_t9 += WORD_SIZE;
+	old_state->reg_t9 += WORD_SIZE;
 
     /* Registro nel quale è salvata la SYSCALL chiamata */
     u32 syscall_number = old_state->reg_a0;
@@ -401,7 +401,7 @@ HIDDEN int terminateProcess(void ** pid){
 
     /* Controllo se la vittima è il processo root */
     if (victim->p_parent == NULL)
-	/* Errore */
+				/* Terminazione processo root */
         return -1;
 
     pcb_t *tut = current_process;
@@ -531,10 +531,6 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
 		}
 		waiting_pcbs[line][devn] = current_process;
 		outProcQ(&ready_queue,current_process);
-
-		state_t *old_state = interrupt_oldarea;
-		memcpy(old_state, &current_process->p_s, sizeof(state_t));
-
 		current_process = NULL;
 	}
 }

@@ -19,24 +19,24 @@ void scheduler(void) {
     pcb_t* next;
 
     /* Se old != NULL */
-	  if (old){
+	if (old){
         /* Ripristino la sua priorità */
-		    restorePriority(old);
+		restorePriority(old);
         /* Salvo lo stato dell'esecuzione prima dell'eccezione */
-		    memcpy(&old->p_s,(state_t *)INT_OLDAREA, sizeof(state_t));
+		memcpy(&old->p_s,(state_t *)INT_OLDAREA, sizeof(state_t));
 
         old->kernel_time += TOD_LO - current_process->kernel_time_start;
         old->kernel_time = 0;
 
         /* Reinserisco il processi nella ready_queue */
         insertProcQ(&ready_queue,old);
- 	  }
+ 	}
+
+    /* Estraggo il processo con priorità più alta dalla ready_queue */
+	next = headProcQ(&ready_queue);
 
     /* Controllo se ci sono ancora processi da eseguire */
     checkEmptyProcQ();
-
-    /* Estraggo il processo con priorità più alta dalla ready_queue */
-	  next = headProcQ(&ready_queue);
 
     /* Aumento la priorità dei processi che sono nella ready_queue */
     priorityAging();
@@ -52,10 +52,8 @@ void scheduler(void) {
 
 /* Funzione ausiliaria per verificare se il processo corrente è vuoto */
 HIDDEN inline void checkEmptyProcQ(void){
-    if(current_process == NULL && list_empty(&ready_queue)){
-        setSTATUS(getSTATUS()|(1UL));
-        WAIT();
-    }
+    if(current_process == NULL && process_count == 0)
+        HALT();
 }
 
 /* Funzione che si occupa del meccanismo di aging delle priorità dei PCB nella ready queue */
