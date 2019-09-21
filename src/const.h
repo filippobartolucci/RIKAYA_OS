@@ -16,8 +16,6 @@
 #define RAMTOP (RAMBASE + RAMSIZE)
 
 typedef unsigned int u32;
-typedef u32 bool;
-
 
 /* Maxi number of overall (eg, system, daemons, user) concurrent processes */
 #define MAXPROC 20
@@ -40,7 +38,6 @@ typedef u32 bool;
 #define STATUS_KUc 1 << 2
 #define STATUS_TE  1 << 27
 #define STATUS_CU  1 << 28
-#define P_STATUS 1<<2|1<<27 | 0xFF00
 
 /* Definisco una Macro per settare lo status all'interno delle New Area, operando con un OR bit a bit imposto:
  * - Lo stato del coprocessore ad 1
@@ -55,16 +52,24 @@ typedef u32 bool;
  *  - Local Timer ON
  *  - La maschera degli Interrupt
  */
-#define STATUS_P (STATUS_KUc | STATUS_TE | (0xFF00 - 0x8000))
+#define STATUS_P (STATUS_KUc | STATUS_TE | 0xFF00)
 
 
-#define DEV_PER_INT 8 /* Maximum number of devices per interrupt line */
+#define WS WORD_SIZE
+#define N_INTERRUPT_LINES   8
+#define N_DEV_PER_IL        8
+#define N_IL                N_INTERRUPT_LINES
+#define N_EXT_IL            5
+#define DEV_REG_SIZE_W   4
+#define DEV_REG_SIZE     (DEV_REG_SIZE_W * WS)
+#define DEV_IL_START        (N_INTERRUPT_LINES - N_EXT_IL)
+#define DEV_REG_START           0x10000050
+#define DEV_REG_ADDR(line, dev) (DEV_REG_START + ((line) - DEV_IL_START) * N_DEV_PER_IL * DEV_REG_SIZE + (dev) * DEV_REG_SIZE)
 
 #define NULL ((void *) 0)
 
 #define CR 0x0a   /* carriage return as returned by the terminal */
 
-#define STATUSMASK 0xFF
 /* Indirizzi per le NEW/OLD AREA della ROM */
 #define INT_NEWAREA 0x2000008c
 #define INT_OLDAREA 0x20000000
@@ -74,7 +79,6 @@ typedef u32 bool;
 #define PGMTRAP_OLDAREA 0x20000230
 #define SYSBK_NEWAREA 0x200003d4
 #define SYSBK_OLDAREA 0x20000348
-
 
 /* Interrupt lines used by the devices */
 #define INT_PLT 1
@@ -100,6 +104,8 @@ typedef u32 bool;
 /* Terminal status */
 #define TERM_BUSY 3
 
+#define STATUSMASK 0xFF
+
 /* Specific type state */
 #define SPEC_TYPE_SYSBP 0
 #define SPEC_TYPE_TLB   1
@@ -116,7 +122,6 @@ typedef u32 bool;
 #define SETTUTOR 8
 #define SPECPASSUP 9
 #define GETPID 10
-
 
 /*Define Time-Slice*/
 #define TIMESLICE 3000

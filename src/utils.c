@@ -6,7 +6,7 @@
  * 	 Componenti del gruppo:	   		*
  *	   - Filippo Bartolucci	   		*
  *	   - Francesco Cerio		     	*/
- 
+
 #include "utils.h"
 
 void *memset(void *s, u32 c, int n){
@@ -16,20 +16,11 @@ void *memset(void *s, u32 c, int n){
   return s;
 }
 
-void memcpy(void *dest, void *src, u32 n) { 
-   // Typecast src and dest addresses to (char *) 
-   char *csrc = (char *)src; 
+void memcpy(void *dest, void *src, u32 n) {
+   // Typecast src and dest addresses to (char *)
+   char *csrc = (char *)src;
    char *cdest = (char *)dest; 
-  
-   // Copy contents of src[] to dest[] 
-   for (int i=0; i<n; i++) 
-       cdest[i] = csrc[i]; 
-} 
-
-u32 getTime(){
-    return TOD_LO;
-}
-
-u32 getMicroSeconds(){
-    return TOD_LO / TIME_SCALE;
+   // Copy contents of src[] to dest[]
+   for (int i=0; i<n; i++)
+       cdest[i] = csrc[i];
 }

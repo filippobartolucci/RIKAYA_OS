@@ -14,8 +14,6 @@
 #include "utils.h"
 #include "initArea.h"
 #include "scheduler.h"
-#include "asl.h"
-#include <umps/arch.h>
 
 /* Funzioni per la gestione delle eccezioni */
 void sysbk_handler(void);
@@ -28,7 +26,6 @@ int waitc_sem;
 pcb_t *waiting_pcbs[8][7];
 /* Funzioni ausiliarie */
 HIDDEN u32 whichConst(u32 line);
-HIDDEN inline int whichLine(u32* bitmap);
 HIDDEN inline int whichDevice(u32* bitmap);
 
 /* SYSCALL */
@@ -42,6 +39,5 @@ HIDDEN int Do_IO(u32 command, u32 *reg, int transm);
 HIDDEN void Set_Tutor();
 HIDDEN int Spec_Passup(int type, state_t *old, state_t *new);
 HIDDEN void Get_pid_ppid(void ** pid, void ** ppid);
-
 
 #endif

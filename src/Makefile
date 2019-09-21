@@ -17,7 +17,7 @@ UMPS2_INCLUDE_DIR = $(UMPS2_DIR_PREFIX)/include/umps2
 
 CFLAGS_LANG = -ffreestanding
 CFLAGS_MIPS = -mips1 -mabi=32 -mno-gpopt -G 0 -mno-abicalls -fno-pic -mfp32
-CFLAGS = $(CFLAGS_LANG) $(CFLAGS_MIPS) -I$(UMPS2_INCLUDE_DIR) -Wall -Wno-unused-function -Wimplicit-function-declaration -O0 -std=gnu11 
+CFLAGS = $(CFLAGS_LANG) $(CFLAGS_MIPS) -I$(UMPS2_INCLUDE_DIR) -Wall -Wno-unused-function -Wimplicit-function-declaration -O0 -std=gnu11
 
 LDFLAGS = -G 0 -nostdlib -T $(UMPS2_DATA_DIR)/umpscore.ldscript
 
@@ -30,7 +30,7 @@ all : kernel.core.umps
 kernel.core.umps : kernel
 	umps2-elf2umps -k $<
 
-kernel : handler.o initArea.o main.o p2test_rikaya_v0.2.o asl.o pcb.o scheduler.o utils.o libumps.o crtso.o 
+kernel : asl.o handler.o initArea.o main.o p2test_rikaya_v0.2.o pcb.o scheduler.o utils.o libumps.o crtso.o 
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean :

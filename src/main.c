@@ -1,4 +1,3 @@
-
 /*						*
  *		 PHASE1 RIKAYA	   		*
  *						*
@@ -18,27 +17,9 @@
 #include "utils.h"
 #include "asl.h"
 
-/* Traced Regions */
-u32 debug = 0;
-u32 debug2 = 0;
-/* Funzioni di test per PHASE2 */
+/* Funzioni di test per PHASE1.5 */
 extern void test();
 
-void dummy(){
-	state_t proc;
-	debug = 0xdadda;
-	memset(&proc, 0, sizeof(proc));
-	proc.pc_epc = (u32)test;
-	proc.reg_sp = RAMTOP - FRAME_SIZE *2;
-	debug = 0xdddd;
-	proc.status = (1<<2|1<<27|0xFF00|0x1);
-	debug = 0xcacca;
-	SYSCALL(SETTUTOR, 0, 0,0);
-	debug = 0xacca;
-	SYSCALL(CREATEPROCESS, (u32)&proc,1,0);
-	debug = 0xaffa;
-	while(1);
-}
 
 /* Lista dei processi ready */
 LIST_HEAD(ready_queue);
@@ -59,21 +40,30 @@ state_t *program_trap_oldarea = (state_t *)PGMTRAP_OLDAREA;
 state_t *interrupt_oldarea = (state_t *)INT_OLDAREA;
 state_t *tlbmgt_oldarea = (state_t *)TLB_OLDAREA;
 
+void dummy(){
+    SYSCALL(SETTUTOR,0,0,0);
+    state_t proc;
+	memset(&proc,0,sizeof(proc));
+	proc.pc_epc = (u32) test;
+	proc.reg_sp = RAMTOP - FRAME_SIZE *2;
+	proc.status = STATUS_P;
+	SYSCALL(CREATEPROCESS, (u32) &proc,1,0);
+	while (1);
+}
 
-void setProcess(u32 proc, int prio, int frame){
+void setProcess(memaddr proc, int n,int m){
     /* Prendo un PCB dalla lista dei PCB liberi */
 	pcb_t *tmp = allocPcb();
     /* Imposto il PROGRAM COUNTER del processo */
-	tmp->p_s.pc_epc = tmp->p_s.reg_t9 = proc;
+	tmp->p_s.pc_epc = proc;
+	tmp->p_s.reg_t9 = proc;
     /* Imposto la priorità */
-	tmp->priority = tmp->original_priority = prio;
+	tmp->priority = n;
+	tmp->original_priority = n;
     /* Imposto lo STACK POINTER */
-	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE *frame;
+	tmp->p_s.reg_sp = RAMTOP - FRAME_SIZE * m;
     /* Imposto lo STATUS del process */
-	setSTATUS(getSTATUS()|0|1<<27|0xFF<<8);
-
-	tmp->total_time = TOD_LO;
-
+	tmp->p_s.status = STATUS_P ;
     /* Aumento il contatore dei processi */
 	process_count++;
     /* Inserisco il PCB nella lista dei processi in stato ready */
@@ -83,19 +73,13 @@ void setProcess(u32 proc, int prio, int frame){
 int main(void){
     /* Inizializzazione del sistema */
     initAREA();
-    initPcbs();
     initASL();
-    /* Setto Interval Timer */
-    *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
+    initPcbs();
 
-    debug = 1;
-    setProcess(dummy, 0, 1);
-    //debug = 2;
+    setProcess((memaddr)dummy,0,1);
     /* Passo il controllo allo scheduler */
     scheduler();
-
-    /* L'esecuzione non deve mai arrivare qui */
+    /* L'esecuzione non può mai arrivare qua */
     PANIC();
     return 0;
 }
-
