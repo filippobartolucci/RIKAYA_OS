@@ -228,10 +228,9 @@ HIDDEN u32 whichConst(u32 line){
 /* Funzione per trovare quale dispositivo ha causato l'interrupt */
 HIDDEN inline int whichDevice(u32* bitmap) {
 	int dev_n = 0;
-
-	while (*bitmap > 1){
-		dev_n++;
-		*bitmap >>= 1;
+	for(dev_n;dev_n<8;dev_n++ ){
+		if( bitmap && (1UL << dev_n ) )
+			break;
 	}
 	return dev_n;
 }
