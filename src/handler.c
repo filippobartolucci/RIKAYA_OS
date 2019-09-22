@@ -155,7 +155,7 @@ void int_handler(void){
 		line =3;
 		devnum = whichDevice(INT_BITMAP_DISK);
 		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
-		freed =Verhogen(&devs[line][devnum]);
+		freed =Verhogen(&semd_keys[line][devnum]);
 		freed->p_s.reg_v0 = dev->status;
 		/* Invio acknowledgement interrupt */
 		dev->command = DEV_ACK;
@@ -166,7 +166,7 @@ void int_handler(void){
 		line =4;
 		devnum = whichDevice(INT_BITMAP_TAPE);
 		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
-		freed =Verhogen(&devs[line][devnum]);
+		freed =Verhogen(&semd_keys[line][devnum]);
 		freed->p_s.reg_v0 = dev->status;
 		/* Invio acknowledgement interrupt */
 		dev->command = DEV_ACK;
@@ -177,7 +177,7 @@ void int_handler(void){
 		line =5;
 		devnum = whichDevice(INT_BITMAP_NET);
 		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
-		freed =Verhogen(&devs[line][devnum]);
+		freed =Verhogen(&semd_keys[line][devnum]);
 		freed->p_s.reg_v0 = dev->status;
 		/* Invio acknowledgement interrupt */
 		dev->command = DEV_ACK;
@@ -188,7 +188,7 @@ void int_handler(void){
 		line =7;
 		devnum = whichDevice(INT_BITMAP_PRINTER);
 		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
-		freed =Verhogen(&devs[line][devnum]);
+		freed =Verhogen(&semd_keys[line][devnum]);
 		freed->p_s.reg_v0 = dev->status;
 		/* Invio acknowledgement interrupt */
 		dev->command = DEV_ACK;
