@@ -154,7 +154,7 @@ void int_handler(void){
     else if (cause == (cause | 0x8)){    /* 00001000 */
 		line =3;
 		devnum = whichDevice(INT_BITMAP_DISK);
-		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
+		dev = (dtpreg_t *)(DEV_REG_ADDR(line,devnum));
 		freed =Verhogen(&semd_keys[line][devnum]);
 		freed->p_s.reg_v0 = dev->status;
 		/* Invio acknowledgement interrupt */
@@ -165,7 +165,7 @@ void int_handler(void){
     else if (cause == (cause | 0x10)){	 /* 00010000 */
 		line =4;
 		devnum = whichDevice(INT_BITMAP_TAPE);
-		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
+		dev = (dtpreg_t *)(DEV_REG_ADDR(line,devnum));
 		freed =Verhogen(&semd_keys[line][devnum]);
 		freed->p_s.reg_v0 = dev->status;
 		/* Invio acknowledgement interrupt */
@@ -176,7 +176,7 @@ void int_handler(void){
     else if (cause == (cause | 0x20)){   /* 00100000 */
 		line =5;
 		devnum = whichDevice(INT_BITMAP_NET);
-		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
+		dev = (dtpreg_t *)(DEV_REG_ADDR(line,devnum));
 		freed =Verhogen(&semd_keys[line][devnum]);
 		freed->p_s.reg_v0 = dev->status;
 		/* Invio acknowledgement interrupt */
@@ -187,7 +187,7 @@ void int_handler(void){
     else if (cause == (cause | 0x40)){    /* 01000000 */
 		line =7;
 		devnum = whichDevice(INT_BITMAP_PRINTER);
-		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
+		dev = (dtpreg_t *)(DEV_REG_ADDR(line,devnum));
 		freed =Verhogen(&semd_keys[line][devnum]);
 		freed->p_s.reg_v0 = dev->status;
 		/* Invio acknowledgement interrupt */
