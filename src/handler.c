@@ -146,7 +146,7 @@ void int_handler(void){
 
     else if (cause == (cause | 0x4)){    /* 00000100 */
         /* Interval Timer */
-        while(freed = vVerhogen((int*)&waitc_sem))
+        while(freed = Verhogen((int*)&waitc_sem))
 		insertProcQ(&ready_queue, freed);
         *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK * 1000 * TIME_SCALE;
     }
@@ -202,14 +202,14 @@ void int_handler(void){
 
         if((term->recv_status & 0xFF)==5){
 			line++;
-			freed = vVerhogen((int*)&semd_keys[line][devnum]);
+			freed = Verhogen((int*)&semd_keys[line][devnum]);
             freed->p_s.reg_v0 = term->recv_status;
 	    	insertProcQ(&ready_queue, freed);
 	    	term->recv_command = DEV_ACK;
             while((term->recv_status & 0xFF) != DEV_ST_READY);
 
         }else if((term->recv_status & 0xFF)==5){
-            freed = vVerhogen((int*)&semd_keys[line][devnum]);
+            freed = Verhogen((int*)&semd_keys[line][devnum]);
             freed->p_s.reg_v0 = term->transm_status;
 	    	insertProcQ(&ready_queue, freed);
 	    	term->transm_command = DEV_ACK;
