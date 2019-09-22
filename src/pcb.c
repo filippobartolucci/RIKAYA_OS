@@ -11,15 +11,15 @@
 #include "const.h"
 #include "pcb.h"
 
-HIDDEN pcb_t pcbFree_table[MAXPROC];
+pcb_t pcbFree_table[MAXPROC];
 HIDDEN LIST_HEAD(pcbFree_h); 		/* Lista con sentinella dei pcb liberi o inutilizzati */
 
 
 
 /* PCB free list handling functions */
 
-/* Inizializza la pcbFree in modo da contenere tutti gli elementi della pcbFree_table. 
- * Questo metodo deve essere chiamato una volta sola in fase di inizializzazione della struttura dati. 
+/* Inizializza la pcbFree in modo da contenere tutti gli elementi della pcbFree_table.
+ * Questo metodo deve essere chiamato una volta sola in fase di inizializzazione della struttura dati.
 */
 void initPcbs(void){
 	int i = 0;
@@ -29,51 +29,56 @@ void initPcbs(void){
 	}
 }
 
-/* Inserisce il pcb puntato da p nella lista dei PCB liberi 
+/* Inserisce il pcb puntato da p nella lista dei PCB liberi
 */
 void freePcb(pcb_t *p){
 	    list_add_tail(&(p->p_next), &(pcbFree_h));
 }
 
 
-/* Restituisce NULL se la pcbFree è vuota.                                 
- * Altrimenti rimuove un elemento dalla pcbFree,                          
- * inizializza tutti i campi (NULL\0) e restituisce l'elemento rimosso    
+/* Restituisce NULL se la pcbFree è vuota.
+ * Altrimenti rimuove un elemento dalla pcbFree,
+ * inizializza tutti i campi (NULL\0) e restituisce l'elemento rimosso
 */
 pcb_t *allocPcb(void){
 	/* Controllo per verificare se pcbFree sia vuoto o no */
 	if (list_empty(&(pcbFree_h))) return NULL;
-	
-	/* Elemento precedente alla sentinella è l'ultimo elemento della lista 
-	 * Salvo il puntatore del PCB da puntare 
+
+	/* Elemento precedente alla sentinella è l'ultimo elemento della lista
+	 * Salvo il puntatore del PCB da puntare
 	*/
 	pcb_t *tmp=container_of(pcbFree_h.prev, pcb_t, p_next);
-					       
+
 	/* Rimuove tmp dalla lista pcbFree_H che lo contiene */
 	list_del(&(tmp->p_next));
 
 	/* Inizializzo tutti i campi di tmp a NULL */
+	
 	tmp->p_parent = NULL;
 	tmp->p_semkey = NULL;
 	tmp->priority = 0;
 	tmp->original_priority = 0;
+    	tmp->tutor = FALSE;
+	tmp->user_time_start = 0;
+	tmp->user_time = 0;
+	tmp->kernel_time_start = 0;
+	tmp->kernel_time = 0;
+	tmp->total_time = 0;
 	tmp->p_s.entry_hi = 0;
-	tmp->p_s.cause = 0;
 	tmp->p_s.status = 0;
+	tmp->p_s.cause = 0;
 	tmp->p_s.pc_epc = 0;
-	
-	/* Per il campo p_s.gpr[] uso un for per settare a 0 tutti le 29 variabili dell' array */
 	int j = 0;
-	for(;j<29;j++){
+	for (;j<29; j++)
 		tmp->p_s.gpr[j] = 0;
-	}	
 	tmp->p_s.hi = 0;
 	tmp->p_s.lo = 0;
-							        
-	INIT_LIST_HEAD(&(tmp->p_next));								    
-	INIT_LIST_HEAD(&(tmp->p_child));								        
+	
+	//memset(tmp, 0, sizeof(pcb_t));
+	INIT_LIST_HEAD(&(tmp->p_next));
+	INIT_LIST_HEAD(&(tmp->p_child));
 	INIT_LIST_HEAD(&(tmp->p_sib));
-									    
+
 	return tmp;
  }
 
@@ -84,20 +89,20 @@ void mkEmptyProcQ(struct list_head *head){
 	INIT_LIST_HEAD(head);
 }
 
-/* Controllo se la lista puntata da head è vuota e restituisco true in caso affermativo, false altrimenti 
+/* Controllo se la lista puntata da head è vuota e restituisco true in caso affermativo, false altrimenti
 */
 int emptyProcQ(struct list_head *head){
 	if (list_empty(head))
 		return TRUE;
-	else 
+	else
 		return FALSE;
 }
 
-/* Inserisco un processo in coda alla lista, controllando che la priorità sia decrescente 
+/* Inserisco un processo in coda alla lista, controllando che la priorità sia decrescente
 */
 void insertProcQ(struct list_head *head, pcb_t *p){
 	pcb_t *tmp;
-	
+
 	list_for_each_entry(tmp, head, p_next){
 		if (p->priority > tmp->priority){
 			list_add_tail(&(p->p_next), &(tmp->p_next));
@@ -109,26 +114,26 @@ void insertProcQ(struct list_head *head, pcb_t *p){
 }
 
 
-/* Restituisce l'elemento di testa della coda dei processi da head, senza rimuoverlo. 
- * Ritorna NULL se la coda non ha elementi 					      
+/* Restituisce l'elemento di testa della coda dei processi da head, senza rimuoverlo.
+ * Ritorna NULL se la coda non ha elementi
 */
 pcb_t *headProcQ(struct list_head *head){
 
 		/* Controllo iniziale per vedere se head è vuoto */
-		if (list_empty(head)) return NULL;		
-		/* Devo restituire il primo elemento della lista head non vuota. */	
-		return (container_of(head->next, pcb_t, p_next)); 
+		if (list_empty(head)) return NULL;
+		/* Devo restituire il primo elemento della lista head non vuota. */
+		return (container_of(head->next, pcb_t, p_next));
 }
 
-/* Rimuove il primo elemento dalla coda dei processi puntata da head. Ritorna NULL se la coda è vuota. 
- * Altrimenti ritorna il puntatore all'elemento rimosso dalla lista 				       
+/* Rimuove il primo elemento dalla coda dei processi puntata da head. Ritorna NULL se la coda è vuota.
+ * Altrimenti ritorna il puntatore all'elemento rimosso dalla lista
 */
 pcb_t *removeProcQ(struct list_head *head){
 
 		/* Controllo iniziale per vedere se head è vuoto */
 		/* Se lista è vuota restituisco NULL */
-		if (list_empty(head)) return NULL; 
-				
+		if (list_empty(head)) return NULL;
+
 		/* C'è almeno un elemento nella lista */
 		/* Rimuovo il primo e lo restituisco  */
 		pcb_t *tmp = container_of(head->next,pcb_t,p_next) ;	/* Puntatore al primo elemento della lista */
@@ -136,28 +141,28 @@ pcb_t *removeProcQ(struct list_head *head){
 		return tmp ;
 }
 
-/* Rimuove il PCB puntato da p dalla coda dei processi puntata da head 
- * Se p non è presente nella coda, restituisce NULL	 		
+/* Rimuove il PCB puntato da p dalla coda dei processi puntata da head
+ * Se p non è presente nella coda, restituisce NULL
 */
 pcb_t *outProcQ(struct list_head *head, pcb_t *p){
-	
+
 	if (emptyProcQ(head)) return NULL;
-	
+
 	/* Scorro la lista head alla ricerca di p */
 	/* Puntatore che uso per confrontare gli elementi della coda con p */
-	pcb_t *tmp=NULL;	
-	
+	pcb_t *tmp=NULL;
+
 	/* Se p=tmp, allora rimuovo p dalla coda e lo restituisco */
 	list_for_each_entry(tmp, head, p_next){
-		if (p == tmp) {	
-			/* p trovato, lo rimuovo da head */ 
+		if (p == tmp) {
+			/* p trovato, lo rimuovo da head */
 			list_del(&(p->p_next));
 			return p;
 		}
 	}
 	/* Ho finito di scorrere head e non ho trovato p */
 	/* Restituisco NULL */
-	return NULL; 
+	return NULL;
 }
 
 
@@ -165,12 +170,12 @@ pcb_t *outProcQ(struct list_head *head, pcb_t *p){
 /* Tree view functions */
 
 
-/* Controllo se la lista passata come parametro ha figli o meno e restituisco TRUE in caso non ne abbia e FALSE altrimenti 
-*/ 
+/* Controllo se la lista passata come parametro ha figli o meno e restituisco TRUE in caso non ne abbia e FALSE altrimenti
+*/
 int emptyChild(pcb_t *this){
-	if (list_empty(&(this->p_child))) 
+	if (list_empty(&(this->p_child)))
 		return TRUE;
-	else 
+	else
 		return FALSE;
 }
 
@@ -182,17 +187,17 @@ void insertChild(pcb_t *prnt, pcb_t *p){
 	p->p_parent = prnt;
 	/* Aggiungo p in coda alla lista dei figli di prnt */
 	list_add_tail(&(p->p_sib), &(prnt->p_child));
-	
+
 }
 
 
-/* Rimuove il primo figlio del PCB puntato da p. Se p non ha figli, restituisce NULL 
+/* Rimuove il primo figlio del PCB puntato da p. Se p non ha figli, restituisce NULL
 */
 pcb_t *removeChild(pcb_t *p){
-	
-	/*Controllo se il processo ha dei figlio e restituisco NUll in caso negativo */ 
+
+	/*Controllo se il processo ha dei figlio e restituisco NUll in caso negativo */
 	if (list_empty(&(p->p_child)))	return NULL;
-		
+
 	/* Cerco il puntatore al primo figlio */
         struct list_head* firstChild = list_next(&(p->p_child));
         pcb_t* firstPcb = container_of(firstChild, pcb_t, p_sib);
@@ -201,7 +206,7 @@ pcb_t *removeChild(pcb_t *p){
         firstPcb->p_parent = NULL;
 
         /* Elimino il figlio dalla lista */
-        list_del(firstChild);	
+        list_del(firstChild);
 
         /* Restituisco il figlio eliminato */
 	return firstPcb;
@@ -209,13 +214,13 @@ pcb_t *removeChild(pcb_t *p){
 
 
 
-/* Rimuove il PCB puntato da p dalla lista dei figli del padre. 
- * Se il PCB puntato da p non ha un padre, restituisce NULL. 
- * Altrimenti restituisce l’elemento rimosso (cioè p). 
- * A differenza della removeChild, p può trovarsi in una posizione arbitraria 
+/* Rimuove il PCB puntato da p dalla lista dei figli del padre.
+ * Se il PCB puntato da p non ha un padre, restituisce NULL.
+ * Altrimenti restituisce l’elemento rimosso (cioè p).
+ * A differenza della removeChild, p può trovarsi in una posizione arbitraria
 */
 pcb_t *outChild(pcb_t *p){
-	if ((&(p->p_parent))== NULL) return NULL;  
+	if ((&(p->p_parent))== NULL) return NULL;
 	/*elimino elemento dall'albero*/
 	list_del (&(p->p_sib));
 	p->p_parent = NULL;

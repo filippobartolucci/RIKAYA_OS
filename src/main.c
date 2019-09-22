@@ -17,9 +17,9 @@
 #include "utils.h"
 #include "asl.h"
 
-u32 debug;
+u32 debug=0;
+u32 debug2=0;
 
-/* Funzioni di test per PHASE1.5 */
 extern void test();
 
 /* Lista dei processi ready */
@@ -28,6 +28,7 @@ LIST_HEAD(ready_queue);
 pcb_t* current_process = NULL;
 /* Contatore processi */
 u32 process_count = 0;
+
 
 /* Puntatori alle NEW AREA della ROM */
 state_t *sysbk_newarea = (state_t *)SYSBK_NEWAREA;
@@ -47,8 +48,8 @@ void dummy(){
 	memset(&proc,0,sizeof(proc));
 	proc.pc_epc = (u32) test;
 	proc.reg_sp = RAMTOP - FRAME_SIZE *2;
-	proc.status = STATUS_P;
-	SYSCALL(CREATEPROCESS, (u32) &proc,1,0);
+	proc.status = STATUS_P|0x20|1UL<<28;
+	SYSCALL(CREATEPROCESS, (int)&proc,1,0);
 	while (1);
 }
 
@@ -74,8 +75,14 @@ void setProcess(memaddr proc, int n,int m){
 int main(void){
     /* Inizializzazione del sistema */
     initAREA();
-    initASL();
+    //initASL();
     initPcbs();
+    initASL();
+
+    //*((u32 *)INT_TIMER) =(u32)PSEUDO_CLOCK_TICK * 1000 * TIME_SCALE;
+
+    memset(&semd_keys, 0, sizeof(semd_keys));
+    memset(&waitc_sem,0,sizeof(waitc_sem));
 
     setProcess((memaddr)dummy,0,1);
     /* Passo il controllo allo scheduler */

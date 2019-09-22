@@ -9,7 +9,8 @@
 
 #include "handler.h"
 
-extern u32 debug;
+
+
 
 /* Gestione SYSCALL/BREAKPOINT */
 void sysbk_handler(void){
@@ -26,8 +27,8 @@ void sysbk_handler(void){
 
   	/* Viene incrementato il valore del PC */
   	old_state->pc_epc += WORD_SIZE;
+	memcpy(&current_process->p_s, old_state, sizeof(state_t));
 	old_state->reg_t9 += WORD_SIZE;
-
     /* Registro nel quale è salvata la SYSCALL chiamata */
     u32 syscall_number = old_state->reg_a0;
 
@@ -53,16 +54,16 @@ void sysbk_handler(void){
 		    flag = terminateProcess((void **) old_state->reg_a1);
 		    break;
 		case PASSEREN:
-      	    Passeren((int *) old_state->reg_a1);
+      	    Passeren((int*)old_state->reg_a1);
       	    break;
 		case VERHOGEN:
-			Verhogen((int *) old_state->reg_a1);
+			Verhogen((int*)old_state->reg_a1);
 			break;
 		case WAITCLOCK:
 			Wait_Clock();
 			break;
 		case WAITIO:
-			Do_IO((u32)old_state->reg_a1, (u32 *)old_state->reg_a2, (int)old_state->reg_a3);
+			Do_IO(old_state->reg_a1, (u32 *)old_state->reg_a2, old_state->reg_a3);
 			break;
 		case SETTUTOR:
 			Set_Tutor();
@@ -89,6 +90,7 @@ void sysbk_handler(void){
     		current_process->kernel_time += TOD_LO - current_process->kernel_time_start;
     		current_process->user_time_start = TOD_LO;
     		current_process->kernel_time_start = 0;
+
             /* Continuo con l'esecuzione del processo */
     		LDST(old_state);
     	}
@@ -98,9 +100,9 @@ void sysbk_handler(void){
 
 
 /* Gestione INTERRUPT */
-int semd_keys[8][7];
-int waitc_sem = 0;
-pcb_t *waiting_pcbs[8][7];
+S32 semd_keys[8][7];
+S32 waitc_sem = 0;
+
 
 void int_handler(void){
     /* Gestione tempo */
@@ -115,6 +117,7 @@ void int_handler(void){
     u32 cause = old_state->cause;
 	u32 bitmap;
 	int devnum;
+    int line = 0;
 
     /* Struttura per il dispositivo */
     dtpreg_t *dev;
@@ -122,8 +125,7 @@ void int_handler(void){
 	termreg_t *term;
 	pcb_t* freed;
     /* Dichiaro due variabili per salvare lo stato dei terminali */
-    u32 transm_st = 0;
-    u32 recv_st = 0;
+
 
     cause = cause >> 8;
     /* Ricerca dell' interrupt
@@ -142,117 +144,127 @@ void int_handler(void){
 		/* Processor Local Timer */
         scheduler();
 
-    else if (cause == (cause | 0x4))     /* 00000100 */
+    else if (cause == (cause | 0x4)){    /* 00000100 */
         /* Interval Timer */
-        while(Verhogen(&waitc_sem));
-
-    else if (cause == (cause | 0x8))     /* 00001000 */
-		;
-        /* Disk */
-
-    else if (cause == (cause | 0x10))	 /* 00010000 */
-		;
-        /* Tape */
-
-    else if (cause == (cause | 0x20))    /* 00100000 */
-	    ;
-        /* Interrupt Line 5 */
-
-    else if (cause == (cause | 0x40))    /* 01000000 */
-		;
-        /* Printer */
-
-    else if (cause == (cause | 0x80)){
-		line = INT_TERMINAL;
-		devnum = whichDevice(INT_BITMAP_TERMINAL);
-		term = (termreg_t *)DEV_REG_ADDR(line, devnum);
-
-		if((term->recv_status & 0xFF)==5){
-
-		}else if((term->transm_status & 0xFF)==5){
-			freed = Verhogen(&semd_keys[line][devnum]);
-			freed->p_s.reg_a0 = term->transm_status;
-			term->transm_command = DEV_ACK;
-        	while((term->transm_status & 0xFF) != DEV_ST_READY);
-
-		}
-    }else{
-		/* Interrupt, ma nessuna linea pending */
-		PANIC();
+        while(freed = vVerhogen((int*)&waitc_sem))
+		insertProcQ(&ready_queue, freed);
+        *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK * 1000 * TIME_SCALE;
     }
 
-    if(current_process!=NULL){
-		current_process->user_time_start = TOD_LO;
-		LDST(old_state);
+    else if (cause == (cause | 0x8)){    /* 00001000 */
+		line =3;
+		devnum = whichDevice(INT_BITMAP_DISK);
+		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
+		freed =Verhogen(&devs[line][devnum]);
+		freed->p_s.reg_v0 = dev->status;
+		/* Invio acknowledgement interrupt */
+		dev->command = DEV_ACK;
+		while((dev->status) != DEV_ST_READY);
+    /* Disk */
 	}
-	else{
-		scheduler();
+    else if (cause == (cause | 0x10)){	 /* 00010000 */
+		line =4;
+		devnum = whichDevice(INT_BITMAP_TAPE);
+		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
+		freed =Verhogen(&devs[line][devnum]);
+		freed->p_s.reg_v0 = dev->status;
+		/* Invio acknowledgement interrupt */
+		dev->command = DEV_ACK;
+		while((dev->status) != DEV_ST_READY);;
+    /* Tape */
 	}
+    else if (cause == (cause | 0x20)){   /* 00100000 */
+		line =5;
+		devnum = whichDevice(INT_BITMAP_NET);
+		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
+		freed =Verhogen(&devs[line][devnum]);
+		freed->p_s.reg_v0 = dev->status;
+		/* Invio acknowledgement interrupt */
+		dev->command = DEV_ACK;
+		while((dev->status) != DEV_ST_READY);;
+    /* Interrupt Line 5 */
+	}
+    else if (cause == (cause | 0x40)){    /* 01000000 */
+		line =7;
+		devnum = whichDevice(INT_BITMAP_PRINTER);
+		dev = (dtpreg_t *)(DEV_ADDRESS(line,devnum));
+		freed =Verhogen(&devs[line][devnum]);
+		freed->p_s.reg_v0 = dev->status;
+		/* Invio acknowledgement interrupt */
+		dev->command = DEV_ACK;
+		while((dev->status) != DEV_ST_READY);;
+    /* Printer */
+	}
+    else if (cause == (cause | 0x80)){
+        line = INT_TERMINAL;
+        devnum = whichDevice(INT_BITMAP_TERMINAL);
+        term = (termreg_t *)DEV_REG_ADDR(line, devnum);
+
+        if((term->recv_status & 0xFF)==5){
+			line++;
+			freed = vVerhogen((int*)&semd_keys[line][devnum]);
+            freed->p_s.reg_v0 = term->recv_status;
+	    	insertProcQ(&ready_queue, freed);
+	    	term->recv_command = DEV_ACK;
+            while((term->recv_status & 0xFF) != DEV_ST_READY);
+
+        }else if((term->recv_status & 0xFF)==5){
+            freed = vVerhogen((int*)&semd_keys[line][devnum]);
+            freed->p_s.reg_v0 = term->transm_status;
+	    	insertProcQ(&ready_queue, freed);
+	    	term->transm_command = DEV_ACK;
+            while((term->transm_status & 0xFF) != DEV_ST_READY);
+        }
+    }else{
+        /* Interrupt, ma nessuna linea pending */
+        PANIC();
+    }
+    if(current_process){
+        current_process->user_time_start = TOD_LO;
+        LDST(old_state);
+    }
+    else{
+        scheduler();
+    }
 }
 
-HIDDEN u32 whichConst(u32 line){
-	u32 value = 0;
-	switch(line){
-		case 3:
-			value = INT_BITMAP_DISK;
-		break;
-
-		case 4:
-			value = INT_BITMAP_TAPE;
-		break;
-
-		case 5:
-			value = INT_BITMAP_NET;
-		break;
-
-		case 6:
-			value = INT_BITMAP_PRINTER;
-		break;
-
-		case 7:
-			value = INT_BITMAP_TERMINAL;
-		break;
-	}
-
-	return value;
-}
 /* Funzione per trovare quale dispositivo ha causato l'interrupt */
 HIDDEN inline int whichDevice(u32* bitmap) {
-	int dev_n = 0;
-	for(dev_n;dev_n<8;dev_n++ ){
-		if( bitmap && (1UL << dev_n ) )
-			break;
-	}
-	return dev_n;
+    int dev_n = 0;
+    for(dev_n;dev_n<8;dev_n++ ){
+        if( bitmap && (1UL << dev_n ) )
+            break;
+    }
+    return dev_n;
 }
 
 /* Gestione TLB */
 void tlb_handler(void){
-	state_t* old_state = tlbmgt_oldarea;
-	old_state->pc_epc += WORD_SIZE;
-	old_state->reg_t9 += WORD_SIZE;
+    state_t* old_state = tlbmgt_oldarea;
+    old_state->pc_epc += WORD_SIZE;
+    old_state->reg_t9 += WORD_SIZE;
 
-	/* Se il processo non ha un handler viene terminato */
-	if (!current_process->spec_set[SPEC_TYPE_TLB])
-		terminateProcess(NULL);
+    /* Se il processo non ha un handler viene terminato */
+    if (!current_process->spec_set[SPEC_TYPE_TLB])
+        SYSCALL(TERMINATEPROCESS, 0, 0, 0);
 
-	memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_TLB], sizeof(state_t));
-	LDST(current_process->spec_narea[SPEC_TYPE_TLB]);
+    memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_TLB], sizeof(state_t));
+    LDST(current_process->spec_narea[SPEC_TYPE_TLB]);
 }
+
 
 /* Gestione PGMTRP */
 void pgmtrp_handler(void){
     state_t* old_state = program_trap_oldarea;
     old_state->pc_epc += WORD_SIZE;
-	old_state->reg_t9 += WORD_SIZE;
+    old_state->reg_t9 += WORD_SIZE;
+    /* Se il processo non ha un handler viene terminato */
+    if (!current_process->spec_set[SPEC_TYPE_TRAP])
+        SYSCALL(TERMINATEPROCESS, 0, 0, 0);
 
-	/* Se il processo non ha un handler viene terminato */
-	if (!current_process->spec_set[SPEC_TYPE_TRAP])
-		terminateProcess(NULL);
-
-	memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_TRAP], sizeof(state_t));
-	/* L'handler che si occuperà della trap */
-	LDST(current_process->spec_oarea[SPEC_TYPE_TRAP]);
+    memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_TRAP], sizeof(state_t));
+    /* L'handler che si occuperà della trap */
+    LDST(current_process->spec_oarea[SPEC_TYPE_TRAP]);
 }
 
 
@@ -264,23 +276,23 @@ void pgmtrp_handler(void){
  *  - Tempo usato dal processo come utente (user)
  *  - Tempo usato dal processo come kernel (tempi di SYSCALL e INTERRUPT relativi al processo
  *  - Tempo totale trascorso dalla prima attivazione del processo
-*/
+ */
 HIDDEN void getCpuTime(u32* user, u32* kernel, u32* wallclock){
-	/* Assegno il pcb corrente ad un pcb interno alla funzione e
-	 * aggiorno il tempo prima di restituire il valore
-	*/
-	pcb_t* pcb = outProcQ(&ready_queue, current_process);
-	pcb->kernel_time += TOD_LO -pcb->kernel_time_start;
-	pcb->kernel_time_start = TOD_LO;
+    /* Assegno il pcb corrente ad un pcb interno alla funzione e
+     * aggiorno il tempo prima di restituire il valore
+     */
+    //pcb_t* pcb = outProcQ(&ready_queue, current_process);
+    current_process->kernel_time += TOD_LO -current_process->kernel_time_start;
+    current_process->kernel_time_start = TOD_LO;
 
-	if(user)
-		*user = pcb->user_time;
+    if(user)
+        *user = current_process->user_time;
 
-	if(kernel)
-		*kernel = pcb->kernel_time;
+    if(kernel)
+        *kernel = current_process->kernel_time;
 
-	if(wallclock)
-		*wallclock = TOD_LO - pcb->total_time;
+    if(wallclock)
+        *wallclock = TOD_LO - current_process->total_time;
 }
 
 /* SYSCALL2
@@ -289,22 +301,21 @@ HIDDEN void getCpuTime(u32* user, u32* kernel, u32* wallclock){
  * cpid contiene l'ID del processo figlio
  */
 HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
-	pcb_t* child = allocPcb();
-	if(cpid)
-		*((pcb_t **)cpid) = child;
-	if(!child)
-		return -1;
-	/* Setto i valori delllo stato */
-	memcpy(&child->p_s, statep, sizeof(state_t));
-	/* Setto i valori delle priorità */
-	child->original_priority = child->priority = priority;
-	/* Setto i valori del tempo di esecuzione */
-	child->total_time = TOD_LO;
-	/* Inserisco il processo come figlio del chiamante */
-	insertChild(current_process, child);
-	insertProcQ(&ready_queue, child);
-	//process_count++;
-	return 0;
+    pcb_t* child = allocPcb();
+    if(cpid)
+        *((pcb_t **)cpid) = child;
+    if(!child)
+        return -1;
+    /* Setto i valori delllo stato */
+    memcpy(&child->p_s, statep, sizeof(state_t));
+    /* Setto i valori delle priorità */
+    child->original_priority = child->priority = priority;
+    /* Setto i valori del tempo di esecuzione */
+    child->total_time = TOD_LO;
+    /* Inserisco il processo come figlio del chiamante */
+    insertChild(current_process, child);
+    insertProcQ(&ready_queue, child);
+    return 0;
 }
 
 /* SYSCALL3
@@ -312,7 +323,7 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
  * (corrente se PID == 0 o NULL), ma non la sua progenie. I processi
  * figli vengono adottati dal primo antenato che sia marcato come tutor.
  * Restituiscce 0 se ha successo e -1 in caso di errore
-*/
+ */
 
 HIDDEN int terminateProcess(void ** pid){
     /* PCB da terminare */
@@ -326,6 +337,7 @@ HIDDEN int terminateProcess(void ** pid){
 
     pcb_t *tut = current_process;
     /* Se il processo vittima è diverso dal processo corrente */
+    if(victim!=current_process){
     if (pid!= NULL){
         /* Controllo che la vittima sia un discendente del processo corrente */
         while ((tut = tut->p_parent)){
@@ -335,31 +347,33 @@ HIDDEN int terminateProcess(void ** pid){
             else if (tut->p_parent == NULL)
                 return -1;
         }
-    }
+    }}
 
     /* Trovo un pcb che possa fare da tutore ai figli della vittima */
     tut = victim;
+
     while (tut->tutor != TRUE)
-        tut = tut->p_parent;
+       tut = tut->p_parent;
 
     /* Assegno tutti i figli della vittima al pcb tutore */
     pcb_t *child = NULL;
     while ((child = removeChild(victim))!= NULL)
-        insertChild(tut, child);
+    insertChild(tut, child);
 
     /* Rilascio dell'eventuale semaforo della vittima*/
     if (victim->p_semkey){
         (*victim->p_semkey)++;
         /* Rimuovo la vittima dalla coda del semaforo */
         outBlocked(victim);
-    }
+    }else outProcQ(&ready_queue,victim);
     /* Rimuovo la vittima dalla lista dei figli del padre */
     outChild(victim);
-    /* Rimuovo la vittima dalla ready_queue */
-    outProcQ(&ready_queue, victim);
     /* Restituisco il pcb alla lista libera */
-    freePcb(victim);
-	//process_count--;
+	if(victim==current_process){
+		current_process =NULL;
+	}
+	freePcb(victim);
+
     return 0;
 }
 
@@ -368,14 +382,14 @@ HIDDEN int terminateProcess(void ** pid){
  * Il valore del semaforo è memorizzato nella variabile passata come parametro
  */
 HIDDEN pcb_t* Verhogen(int* semaddr){
-	*semaddr+=1;
-	pcb_t* blocked=NULL;
+    *semaddr+=1;
+    pcb_t* blocked=NULL;
 	/* Controllo se ci sono procecssi in attesa sul semaforo */
 	if (*semaddr <= 0){
 		blocked = removeBlocked(semaddr);
 		blocked->priority = blocked->original_priority;
 	}
-
+	/* Se si è sbloccato un processo lo rimetto nella ready_queue */
 	if(blocked)
 		insertProcQ(&ready_queue, blocked);
 
@@ -390,7 +404,7 @@ HIDDEN pcb_t* Verhogen(int* semaddr){
  * L'indirizzo della variabile agisce da identificatore per il semaforo
 */
 HIDDEN void Passeren(int *semaddr){
-    *semaddr--;
+    *semaddr-=1;
     if (*semaddr<0){
         /* Rimuovo il processo dalla ready_queue */
         outProcQ(&ready_queue,current_process);
@@ -410,9 +424,11 @@ HIDDEN void Passeren(int *semaddr){
  * al prossimo tick del clock di sistema
 */
 HIDDEN void Wait_Clock(void){
-    if(waitc_sem==0)
-        *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK;
-    Passeren(&waitc_sem);
+	/* Attivo INT_TIMER se non è mai stato usato */
+	if(waitc_sem==0){
+       *((u32 *)INT_TIMER) = (u32)PSEUDO_CLOCK_TICK * 1000 * TIME_SCALE;
+    }
+    Passeren((int*)&waitc_sem);
 }
 
 /* SYSCALL 7
@@ -427,7 +443,8 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
 
 	int line=0;
     int devn=0;
-	for(int i=3;i<8;i++)
+	/* Cerco il dispositivo */
+	for(int i=3;i<8;i++){
 		for(int j=0;j<8;i++){
 			if (DEV_REG_ADDR(i,j) == devreg){
 				line = i;
@@ -435,48 +452,30 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
                 break;
 			}if(line) break;
 		}
+    }
 
 	if (line < 7) {
 	    devreg = (dtpreg_t *)reg ;
 	    devreg->command = command ;
-	    Passeren(&(semd_keys[line][devn]));
+	    Passeren((int*)&(semd_keys[line][devn]));
 	    return devreg->status;
 	}
+	/* Terminale */
 	else if (line == 7) {
+		/* Trasmissione */
 	    termreg = (termreg_t*)reg ;
 	    if (transm== FALSE){
 	        termreg->transm_command = command ;
-	        Passeren(&(semd_keys[line][devn]));
+	        Passeren((int*)&(semd_keys[line][devn]));
 	        return termreg->transm_status ;
         }
         else {
-            /* Comando receive */
+            /* Ricezione */
             termreg->recv_command = command ;
-            Passeren(&(semd_keys[line][devn]));
+            Passeren((int*)&(semd_keys[line][devn]));
             return termreg->recv_status ;
         }
     }
-	/*
-	Passeren(&semd_keys[line][devn]);
-    if (current_process!=NULL){
-		if(line < 7){
-			devreg->command = command;
-		}else{
-			if(!transm){
-				termreg->transm_command = command;
-
-			}else{
-
-				termreg->recv_command = command;
-			}
-		}
-		waiting_pcbs[line][devn] = current_process;
-		outProcQ(&ready_queue,current_process);
-		current_process = NULL;
-
-	}*/
-
-
 }
 
 /* SYSCALL 8

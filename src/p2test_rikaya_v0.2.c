@@ -25,7 +25,6 @@
 #include <umps/libumps.h>
 #include <umps/arch.h>
 
-extern unsigned int debug;
 
 typedef unsigned int devregtr;
 typedef unsigned int cpu_t;
@@ -41,7 +40,7 @@ typedef unsigned int pid_t;
 #define RECVD	5
 #define TRANSM 5
 
-#define STATUS_ALL_INT_ENABLE(x)    (x | (0xFF << 8))
+#define STATUS_ALL_INT_ENABLE(x)  STATUS_P
 
 #define CLOCKINTERVAL	100000UL	/* interval to V clock semaphore */
 
@@ -63,6 +62,7 @@ typedef unsigned int pid_t;
 #define TERM0ADDR       0x10000250
 
 
+
 /* Software and other constants */
 #define CREATENOGOOD	-1
 #define TERMINATENOGOOD	-1
@@ -76,6 +76,12 @@ typedef unsigned int pid_t;
 #define MAXSEM			20
 
 #define DEFAULT_PRIORITY    1
+
+/* Definitions for the status register */
+#define STATUS_KUc 1 << 2
+#define STATUS_TE  1 << 27
+#define STATUS_CU  1 << 28
+#define STATUS_P (STATUS_KUc | STATUS_TE | 0xFF00)
 
 
 SEMAPHORE term_mut=1,	/* for mutual exclusion on terminal */
@@ -115,6 +121,8 @@ pid_t childpid, intermediatepid, p8pid;
 
 void	p2(),p3(),p4(),p5(),p5a(),p5b(),p6(),p7(),p7a(),p5prog(),p5mm();
 void	p5sys(),p8root(),child1(),child2(),p8leaf(),curiousleaf(), intermediate();
+
+unsigned int debug_t = 0;
 
 /* a procedure to print on terminal 0 */
 void print(char *msg) {
@@ -326,7 +334,6 @@ void p2() {
 
 	/* startp2 is initialized to 0. p1 Vs it then waits for p2 termination */
 	SYSCALL(PASSEREN, (int)&startp2, 0, 0);				/* P(startp2)   */
-
 	print("p2 starts\n");
 
 	/* initialize all semaphores in the s[] array */
@@ -479,7 +486,6 @@ void p4() {
 	SYSCALL(VERHOGEN, (int)&endp4, 0, 0);				/* V(endp4)          */
 
 	print("p4 termination after the child\n");
-
 	SYSCALL(TERMINATEPROCESS, 0, 0, 0);			/* terminate p4      */
 
 	/* just did a SYS2, so should not get to this point */

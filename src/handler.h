@@ -21,12 +21,14 @@ void int_handler(void);
 void tlb_handler(void);
 void pgmtrp_handler(void);
 
-int semd_keys[8][7];
-int waitc_sem;
+S32 semd_keys[8][7];
+S32 waitc_sem;
 pcb_t *waiting_pcbs[8][7];
 /* Funzioni ausiliarie */
 HIDDEN u32 whichConst(u32 line);
 HIDDEN inline int whichDevice(u32* bitmap);
+pcb_t *vVerhogen(int *semaddr);
+
 
 /* SYSCALL */
 HIDDEN void getCpuTime(unsigned int* user, unsigned int* kernel, unsigned int* wallclock);
