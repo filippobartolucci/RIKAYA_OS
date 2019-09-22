@@ -9,6 +9,8 @@
 
 #include "handler.h"
 
+extern u32 debug;
+
 /* Gestione SYSCALL/BREAKPOINT */
 void sysbk_handler(void){
     /* Gestione del tempo dei processi */
@@ -160,43 +162,32 @@ void int_handler(void){
 		;
         /* Printer */
 
-    else{
-        bitmap = whichConst(7);
-		devnum = whichDevice(&bitmap);
-		term = (termreg_t *)DEV_REG_ADDR(7, devnum);
-		transm_st = (term->transm_status) & STATUSMASK;
-		recv_st = (term->recv_status) & STATUSMASK;
-		/* Aggiorno lo stato di trasmissione */
-		if(transm_st != TERM_BUSY && transm_st != DEV_ST_READY && transm_st != DEV_NOT_INSTALLED){
-			/* Libero il processo bloccato sul semaforo */
-			if(semd_keys[7][devnum]){
-					semd_keys[7][devnum]++;
-					freed = waiting_pcbs[7][devnum];
-					freed -> p_s.reg_v0 = term -> transm_status;
-					freed -> priority = freed -> original_priority;
-					insertProcQ(&ready_queue, freed);
-				}
-				term -> transm_command = DEV_ACK;
-				while(transm_st != DEV_ST_READY);
-			}
+    else if (cause == (cause | 0x80)){
+		line = INT_TERMINAL;
+		devnum = whichDevice(INT_BITMAP_TERMINAL);
+		term = (termreg_t *)DEV_REG_ADDR(line, devnum);
 
-        /* Aggiorno lo stato di ricezione */
-		if(recv_st != TERM_BUSY && recv_st != DEV_ST_READY && recv_st != DEV_NOT_INSTALLED){
-            /* Libero il processo bloccato sul semaforo */
-    		if(semd_keys[8][devnum]){
-    			semd_keys[8][devnum]++;
-    			freed = waiting_pcbs[8][devnum];
-    			freed -> p_s.reg_v0 = term -> recv_status;
-    			freed -> priority = freed -> original_priority;
-    			insertProcQ(&ready_queue, freed);
-    		}
-    	       term -> recv_command = DEV_ACK;
-    			while(recv_st != DEV_ST_READY);
-    	}
+		if((term->recv_status & 0xFF)==5){
 
+		}else if((term->transm_status & 0xFF)==5){
+			freed = Verhogen(&semd_keys[line][devnum]);
+			freed->p_s.reg_a0 = term->transm_status;
+			term->transm_command = DEV_ACK;
+        	while((term->transm_status & 0xFF) != DEV_ST_READY);
+
+		}
+    }else{
+		/* Interrupt, ma nessuna linea pending */
+		PANIC();
     }
-    current_process->user_time_start = TOD_LO;
-    LDST(old_state);
+
+    if(current_process!=NULL){
+		current_process->user_time_start = TOD_LO;
+		LDST(old_state);
+	}
+	else{
+		scheduler();
+	}
 }
 
 HIDDEN u32 whichConst(u32 line){
@@ -312,7 +303,7 @@ HIDDEN int createProcess(state_t* statep, int priority, void** cpid){
 	/* Inserisco il processo come figlio del chiamante */
 	insertChild(current_process, child);
 	insertProcQ(&ready_queue, child);
-	process_count++;
+	//process_count++;
 	return 0;
 }
 
@@ -368,7 +359,7 @@ HIDDEN int terminateProcess(void ** pid){
     outProcQ(&ready_queue, victim);
     /* Restituisco il pcb alla lista libera */
     freePcb(victim);
-	process_count--;
+	//process_count--;
     return 0;
 }
 
@@ -379,6 +370,7 @@ HIDDEN int terminateProcess(void ** pid){
 HIDDEN pcb_t* Verhogen(int* semaddr){
 	*semaddr+=1;
 	pcb_t* blocked=NULL;
+	/* Controllo se ci sono procecssi in attesa sul semaforo */
 	if (*semaddr <= 0){
 		blocked = removeBlocked(semaddr);
 		blocked->priority = blocked->original_priority;
@@ -444,6 +436,27 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
 			}if(line) break;
 		}
 
+	if (line < 7) {
+	    devreg = (dtpreg_t *)reg ;
+	    devreg->command = command ;
+	    Passeren(&(semd_keys[line][devn]));
+	    return devreg->status;
+	}
+	else if (line == 7) {
+	    termreg = (termreg_t*)reg ;
+	    if (transm== FALSE){
+	        termreg->transm_command = command ;
+	        Passeren(&(semd_keys[line][devn]));
+	        return termreg->transm_status ;
+        }
+        else {
+            /* Comando receive */
+            termreg->recv_command = command ;
+            Passeren(&(semd_keys[line][devn]));
+            return termreg->recv_status ;
+        }
+    }
+	/*
 	Passeren(&semd_keys[line][devn]);
     if (current_process!=NULL){
 		if(line < 7){
@@ -460,7 +473,10 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
 		waiting_pcbs[line][devn] = current_process;
 		outProcQ(&ready_queue,current_process);
 		current_process = NULL;
-	}
+
+	}*/
+
+
 }
 
 /* SYSCALL 8

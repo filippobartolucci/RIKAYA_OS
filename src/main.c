@@ -17,9 +17,10 @@
 #include "utils.h"
 #include "asl.h"
 
+u32 debug;
+
 /* Funzioni di test per PHASE1.5 */
 extern void test();
-
 
 /* Lista dei processi ready */
 LIST_HEAD(ready_queue);
