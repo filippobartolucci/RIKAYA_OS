@@ -25,6 +25,7 @@
 #include <umps/libumps.h>
 #include <umps/arch.h>
 
+extern unsigned int debug;
 
 typedef unsigned int devregtr;
 typedef unsigned int cpu_t;
@@ -137,10 +138,10 @@ void print(char *msg) {
 		/* Put "transmit char" command+char in term0 register (3rd word). This
 			 actually starts the operation on the device! */
 		command = PRINTCHR | (((devregtr) *s) << BYTELEN);
-
+		debug_t = 0xcacca;
 		/* Wait for I/O completion (SYS8) */
 		status = SYSCALL(WAITIO, command, (int)base, FALSE);
-
+		debug_t = 0xaffa;
 		/*		PANIC(); */
 
 		if ((status & TERMSTATMASK) != TRANSM)
@@ -486,6 +487,7 @@ void p4() {
 	SYSCALL(VERHOGEN, (int)&endp4, 0, 0);				/* V(endp4)          */
 
 	print("p4 termination after the child\n");
+
 	SYSCALL(TERMINATEPROCESS, 0, 0, 0);			/* terminate p4      */
 
 	/* just did a SYS2, so should not get to this point */

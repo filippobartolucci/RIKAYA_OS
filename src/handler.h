@@ -23,11 +23,10 @@ void pgmtrp_handler(void);
 
 S32 semd_keys[8][7];
 S32 waitc_sem;
-pcb_t *waiting_pcbs[8][7];
+
 /* Funzioni ausiliarie */
-HIDDEN u32 whichConst(u32 line);
 HIDDEN inline int whichDevice(u32* bitmap);
-pcb_t *vVerhogen(int *semaddr);
+
 
 
 /* SYSCALL */

@@ -18,16 +18,13 @@
 #include "asl.h"
 
 u32 debug=0;
-u32 debug2=0;
-
 extern void test();
 
 /* Lista dei processi ready */
 LIST_HEAD(ready_queue);
 /* Puntatore al processo attivo */
 pcb_t* current_process = NULL;
-/* Contatore processi */
-u32 process_count = 0;
+
 
 
 /* Puntatori alle NEW AREA della ROM */
@@ -78,8 +75,6 @@ int main(void){
     //initASL();
     initPcbs();
     initASL();
-
-    //*((u32 *)INT_TIMER) =(u32)PSEUDO_CLOCK_TICK * 1000 * TIME_SCALE;
 
     memset(&semd_keys, 0, sizeof(semd_keys));
     memset(&waitc_sem,0,sizeof(waitc_sem));
