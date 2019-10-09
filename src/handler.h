@@ -14,6 +14,7 @@
 #include "utils.h"
 #include "initArea.h"
 #include "scheduler.h"
+#include "asl.h"
 
 /* Funzioni per la gestione delle eccezioni */
 void sysbk_handler(void);
@@ -25,7 +26,7 @@ S32 semd_keys[8][7];
 S32 waitc_sem;
 
 /* Funzioni ausiliarie */
-HIDDEN inline int whichDevice(u32* bitmap);
+HIDDEN inline int whichDevice(u32 bitmap);
 
 
 

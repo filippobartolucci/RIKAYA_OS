@@ -52,26 +52,26 @@ void sysbk_handler(void){
 	    case TERMINATEPROCESS:
 		    flag = terminateProcess((void **) old_state->reg_a1);
 		    break;
-			case PASSEREN:
-				Passeren((int*)old_state->reg_a1);
-				break;
-			case VERHOGEN:
-				Verhogen((int*)old_state->reg_a1);
-				break;
-			case WAITCLOCK:
-				Wait_Clock();
-				break;
-			case WAITIO:
-				Do_IO(old_state->reg_a1, (u32 *)old_state->reg_a2, old_state->reg_a3);
-				break;
-			case SETTUTOR:
-				Set_Tutor();
-      	break;
-			case SPECPASSUP:
-				flag = Spec_Passup(old_state->reg_a1, old_state->reg_a2, old_state->reg_a3);
-				break;
-			case GETPID:
-				Get_pid_ppid((void **) old_state->reg_a1, (void **) old_state->reg_a1);
+		case PASSEREN:
+			Passeren((int*)old_state->reg_a1);
+			break;
+		case VERHOGEN:
+			Verhogen((int*)old_state->reg_a1);
+			break;
+		case WAITCLOCK:
+			Wait_Clock();
+			break;
+		case WAITIO:
+			Do_IO(old_state->reg_a1, (u32 *)old_state->reg_a2, old_state->reg_a3);
+			break;
+		case SETTUTOR:
+			Set_Tutor();
+      		break;
+		case SPECPASSUP:
+			flag = Spec_Passup(old_state->reg_a1, old_state->reg_a2, old_state->reg_a3);
+			break;
+		case GETPID:
+			Get_pid_ppid((void **) old_state->reg_a1, (void **) old_state->reg_a1);
 			break;
 
 		default:
@@ -112,8 +112,7 @@ void int_handler(void){
     state_t *old_state = interrupt_oldarea;
     /* Causa dell'interrupt */
     u32 cause = old_state->cause;
-		u32 bitmap = 0;
-		int devnum = 0;
+	int devnum = 0;
     int line = 0;
 
     /* Struttura per il dispositivo */
@@ -197,13 +196,13 @@ void int_handler(void){
       devnum = whichDevice(INT_BITMAP_TERMINAL);
       term = (termreg_t *)DEV_REG_ADDR(line, devnum);
 
-      if((term->recv_status & 0xFF) == 5){
-				line++;
-				freed = Verhogen((int*)&semd_keys[line][devnum]);
-        freed->p_s.reg_v0 = term->recv_status;
+        if((term->recv_status & 0xFF) == 5){
+			line++;
+			freed = Verhogen((int*)&semd_keys[line][devnum]);
+        	freed->p_s.reg_v0 = term->recv_status;
 	    	insertProcQ(&ready_queue, freed);
 	    	term->recv_command = DEV_ACK;
-        while((term->recv_status & 0xFF) != DEV_ST_READY);
+        	while((term->recv_status & 0xFF) != DEV_ST_READY);
         }else if((term->transm_status & 0xFF) == 5){
             freed = Verhogen((int*)&semd_keys[line][devnum]);
             freed->p_s.reg_v0 = term->transm_status;
@@ -224,9 +223,9 @@ void int_handler(void){
 }
 
 /* Funzione per trovare quale dispositivo ha causato l'interrupt */
-HIDDEN inline int whichDevice(u32* bitmap) {
+HIDDEN inline int whichDevice(u32 bitmap) {
     int dev_n = 0;
-    for(dev_n;dev_n<8;dev_n++ ){
+    for(dev_n; dev_n<8; dev_n++ ){
         if( bitmap && (1UL << dev_n ) )
             break;
     }
@@ -433,7 +432,9 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
 
 	/* Ricerca del device */
 	int line=0;
-  int devn=0;
+  	int devn=0;
+
+	int status;
 	/* Confronto il device passato come parametro con tutti i device installati */
 	for(int i=3;i<8;i++){
 		for(int j=0;j<8;i++){
@@ -443,7 +444,7 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
                 break;
 			}if(line) break;
 		}
-  }
+  	}
 	/* Il device non è un terminale */
 	if (line < 7) {
 			/* Ottengo il puntatore al device */
@@ -452,7 +453,7 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
 	    devreg->command = command ;
 			/* P sul semaforo del device*/
 	    Passeren((int*)&(semd_keys[line][devn]));
-	    return devreg->status;
+	    status = devreg->status;
 	}
 	/* Il device è un terminale */
 	else if (line == 7) {
@@ -461,15 +462,17 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
 					/* Comando transm */
 	        termreg->transm_command = command ;
 	        Passeren((int*)&(semd_keys[line][devn]));
-	        return termreg->transm_status ;
+	        status = termreg->transm_status ;
         }
         else {
-          /* Commando receive */
-          termreg->recv_command = command ;
-          Passeren((int*)&(semd_keys[line][devn]));
-          return termreg->recv_status ;
+          	/* Commando receive */
+          	termreg->recv_command = command ;
+          	Passeren((int*)&(semd_keys[line][devn]));
+          	status =  termreg->recv_status ;
         }
     }
+
+	return status;
 }
 
 /* SYSCALL 8
