@@ -447,11 +447,11 @@ HIDDEN int Do_IO(u32 command, u32* reg, int transm){
   	}
 	/* Il device non è un terminale */
 	if (line < 7) {
-			/* Ottengo il puntatore al device */
+		/* Ottengo il puntatore al device */
 	    devreg = (dtpreg_t *)reg ;
-			/* Mando il commando */
+		/* Mando il commando */
 	    devreg->command = command ;
-			/* P sul semaforo del device*/
+		/* P sul semaforo del device*/
 	    Passeren((int*)&(semd_keys[line][devn]));
 	    status = devreg->status;
 	}
