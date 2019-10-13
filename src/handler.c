@@ -1,12 +1,12 @@
-/*						*
- *		 PHASE1 RIKAYA	   		*
- *						*
+/*										*
+ *		 PHASE1 RIKAYA	   				*
+ *										*
  * 	 Sviluppato dal gruppo lso19az22 	*
- *						*
- * 	 Componenti del gruppo:	   		*
- *	   - Filippo Bartolucci	   		*
- *	   - Francesco Cerio		     	*/
-
+ *										*
+ * 	 Componenti del gruppo:	   			*
+ *	   - Filippo Bartolucci	   			*
+ *	   - Francesco Cerio
+*/
 #include "handler.h"
 
 extern u32 debug;
@@ -14,11 +14,11 @@ extern u32 debug;
 /* Gestione SYSCALL/BREAKPOINT */
 void sysbk_handler(void){
     /* Gestione del tempo dei processi */
-		if (current_process->user_time_start){
-			/* Solo per processi non nuovi */
-			current_process->user_time += TOD_LO - current_process->user_time_start;
-			current_process->user_time_start = 0;
-		}
+	if (current_process->user_time_start){
+		/* Solo per processi non nuovi */
+		current_process->user_time += TOD_LO - current_process->user_time_start;
+		current_process->user_time_start = 0;
+	}
     current_process->kernel_time_start = TOD_LO;
 
     /* Stato dell'esecuzione prima dell'eccezione */
@@ -33,8 +33,8 @@ void sysbk_handler(void){
 
     /* Controllo Breakpoint */
     if (syscall_number == 9) {
-			if (!current_process->spec_set[SPEC_TYPE_SYSBP])
-		    terminateProcess(0);
+		if (!current_process->spec_set[SPEC_TYPE_SYSBP])
+			terminateProcess(0);
 	    memcpy(old_state, current_process->spec_oarea[SPEC_TYPE_SYSBP], sizeof(state_t));
 	    LDST(current_process->spec_narea[SPEC_TYPE_SYSBP]);
     }
@@ -82,15 +82,15 @@ void sysbk_handler(void){
 			LDST(current_process->spec_narea[SPEC_TYPE_SYSBP]);
     }
     /* Se c'è un processo viene caricato, altrimento ci pensa lo scheduler */
-		if (current_process){
-			/* Valore di ritorno della SYSCALL */
-			old_state->reg_v0 = flag;
-			/*Gestione del tempo dei processi */
-			current_process->kernel_time += TOD_LO - current_process->kernel_time_start;
-			current_process->user_time_start = TOD_LO;
-			current_process->kernel_time_start = 0;
+	if (current_process){
+		/* Valore di ritorno della SYSCALL */
+		old_state->reg_v0 = flag;
+		/*Gestione del tempo dei processi */
+		current_process->kernel_time += TOD_LO - current_process->kernel_time_start;
+		current_process->user_time_start = TOD_LO;
+		current_process->kernel_time_start = 0;
 
-			/* Continuo con l'esecuzione del processo */
+		/* Continuo con l'esecuzione del processo */
     	LDST(old_state);
     }
     scheduler();
